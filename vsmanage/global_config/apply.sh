@@ -6,7 +6,7 @@
 cd `dirname $0`
 ROOTS=`find /var/lib/vservers -mindepth 1 -maxdepth 1 -type d -name '[^\.]*'`
 
-for FILE in `cd ./fsroot/ && find ./ -not -type d; cd ..`
+for FILE in `cd ./fsroot/ && find ./ -not -type d -not -name '.gitkeep'; cd ..`
 do
 	for VSROOT in $ROOTS
 	do
