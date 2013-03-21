@@ -38,7 +38,7 @@ function varcheck { # name
 }
 
 function bincheck { # name
-	BIN=$(eval "whereis -b ${1} | cut -d' ' -f2-")
+	BIN=$(eval "whereis -b ${1} | cut -d' ' -f2")
 	if [ ! -x $BIN ]
 	then
 	        error "dependency '${1}' not found!"
