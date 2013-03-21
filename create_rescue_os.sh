@@ -14,17 +14,15 @@
 # system as you use for your root partition.
 #
 # After initial execution, check if you can boot the backup.
-
 #
-# config
-#
-TARGET_UUID="107342b6-3175-4664-a909-3b86c1750fe1"
+# usage: ./create_rescue_os.sh <target_UUID>
 
 #
 # functions
 #
 function error {
-	echo "ERROR: " $1
+	args="${*:1}"
+	echo "ERROR:" ${args[@]}
 	exit 1
 }
 
@@ -58,9 +56,19 @@ GRUB_INSTALL=$(bincheck grub-install)
 #
 # collect information
 #
+if [ "$1" = "" ]
+then
+	error 	"Argument missing! " \
+			"Please provide the UUID of the target partition" \
+			"as first argument."
+fi
+
+TARGET_UUID="$1"
 varcheck TARGET_UUID
+
 MOUNTPOINT=$( grep -v "^#" /etc/fstab | grep $TARGET_UUID | awk '{print $2}')
 varcheck MOUNTPOINT
+
 DEVICE=$(blkid | grep $TARGET_UUID | cut -d: -f1 | sed 's/[0-9]*$//g')
 varcheck DEVICE
 
