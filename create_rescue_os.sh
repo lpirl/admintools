@@ -16,6 +16,9 @@
 # After initial execution, check if you can boot the backup.
 #
 # usage: ./create_rescue_os.sh <target_UUID>
+#
+# Put a call to this script in your crontab to create backups regularly,
+# (But remember: USB-keys die earlier the more often you write to them.)
 
 #
 # functions
