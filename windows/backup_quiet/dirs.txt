@@ -1,0 +1,10 @@
+Program Files
+ProgramData
+Recovery
+System Volume Information
+Users
+Windows
+$Recycle.Bin
+$WINDOWS.~BT
+Config.Msi
+Program Files (x86)
