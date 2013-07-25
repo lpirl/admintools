@@ -1,36 +1,41 @@
 #!/bin/bash
 
-# This scripts sends a mail to root when the used disk space exceeds
+# This scripts sends an email to root when the used disk space exceeds
 # a certain limit.
 #
 # Put a call to this script in your crontab to receive mails
 # automatically when your disk space gets critically low.
 #
 # usage:
-# $ ./low_disk_waring.sh <device> <max_percent_used>
+# $ ./disk_space_alert.sh <device> <max_percent_used>
 # example:
-# $ ./low_disk_waring.sh /dev/sda1 90
+# $ ./disk_space_alert.sh /dev/sda1 90
 
 if [ "$1" = "" ]
 then
-	echo "please provide device as 1st argument. Like so:"
+	echo "please provide device as 1st argument. Example:"
 	echo "$0 /dev/sda1 90"
 	exit 1
 fi
 
 if ! [[ "$2" =~ ^[0-9]+$ ]] ;
 then
-	echo "please provide the maximum fill percentage as 2nd argument. Like so:"
+	echo "please provide the maximum percentage of disk space used as 2nd argument. Example:"
 	echo "$0 /dev/sda1 90"
 	exit 1
 fi
 
-CURRENT=$(df / | grep "$1" | awk '{ print $5}' | sed 's/%//g')
-THRESHOLD=$2
+DF_LINE=$(df | grep "$1")
+PERCENT_USED=$(echo $DF_LINE | awk '{ print $5}' | sed 's/%//g')
+PERCENT_MAX=$2
+MOUNTPOINT=$(echo $DF_LINE | awk '{ print $6}' | sed 's/%//g')
+HOSTNAME=$(hostname -f)
 
-if [ "$CURRENT" -gt "$THRESHOLD" ] ; then
-    mail -s "$(hostname -f) Disk Space Alert" root << EOF
-Your root partition remaining free space is critically low!
-Used: $CURRENT%
+if [ "$PERCENT_USED" -gt "$PERCENT_MAX" ] ; then
+    mail -s "$HOSTNAME disk space alert" root << EOF
+Dear Sir or Madam,
+
+the remaining free disk space on device $1 mounted on $MOUNTPOINT is
+critically low! Used: $CURRENT%
 EOF
 fi
