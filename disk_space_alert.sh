@@ -40,6 +40,6 @@ critically low! Used: $PERCENT_USED%
 
 Sincerely yours,
 
-$0
+$(readlink -f "$0")
 EOF
 fi
