@@ -36,6 +36,10 @@ if [ "$PERCENT_USED" -gt "$PERCENT_MAX" ] ; then
 Dear Sir or Madam,
 
 the remaining free disk space on device $1 mounted on $MOUNTPOINT is
-critically low! Used: $CURRENT%
+critically low! Used: $PERCENT_USED%
+
+Sincerely yours,
+
+$0
 EOF
 fi
