@@ -16,14 +16,15 @@ else
 	MAX_DEVIATION="$3"
 fi
 
-A=$(du -s $1 | cut -f1)
-B=$(du -s $2 | cut -f1)
+A=$(du -xs $1 | cut -f1)
+B=$(du -xs $2 | cut -f1)
 
 DEVIATION=$(python -c "print int(100*max($A, $B)/float(min($A, $B)))")
 
 if [ $DEVIATION -gt $MAX_DEVIATION ]
 then
 	echo "ERROR: size differs too much: $DEVIATION% (max $MAX_DEVIATION%)"
-	du -s $1 $2
+	echo "$A	$1"
+	echo "$B	$2"
 	exit 1
 fi
