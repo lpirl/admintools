@@ -6,7 +6,8 @@
 # disk) to your backup target.
 
 if [ $# -lt 2 ]; then
-  echo "Example: $0 /path/a /path/b/ [maximum deviation percent]"
+  echo "Syntax: $0 <path a> <path b> [maximum deviation percent]"
+  echo "If [maximum deviation percent] is omitted, 0% deviation is allowed."
   exit 1
 fi
 
