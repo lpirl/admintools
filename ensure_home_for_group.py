@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 
-# Use this script to ensure a certain shell for an user group.
+# This script ensures that a home directory is set for an user group.
 
 import sys
 from grp import getgrnam
-from pwd import getpwnam
+from pwd import getpwnam, getpwall
 from subprocess import call
 from os.path import isdir
 
@@ -18,10 +18,15 @@ if len(argv) < 3:
 group_name, home = argv[1:3]
 
 try:
-	users = getgrnam(group_name).gr_mem
+	group = getgrnam(group_name)
 except KeyError:
 	print("ERROR: group '%s' not found" % group_name)
 	exit(1)
+
+group_users = group.gr_mem
+primary_group_users = [u.pw_name for u in getpwall()
+							if u.pw_gid == group.gr_gid]
+users = group_users + primary_group_users
 
 for user in users:
 	user_home = home.replace("%u", user)
