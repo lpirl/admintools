@@ -20,27 +20,27 @@ smtpd_sender_restrictions = reject_unknown_sender_domain
 # do most of the checks here to be able to log rejects as warning
 smtpd_recipient_restrictions =	permit_mynetworks,
 
-                # RFC 5321: hostnames need to be fully qualified:
+				# RFC 5321: hostnames need to be fully qualified:
 				reject_non_fqdn_hostname,
 
-                # reject malformed syntax in hostnames:
-                reject_invalid_hostname,
+				# reject malformed syntax in hostnames:
+				reject_invalid_hostname,
 
-                # know the sender (bounces etc):
+				# know the sender (bounces etc):
 				reject_non_fqdn_sender,
 				reject_unknown_sender_domain,
 
-                # know the recipient (the sender should know this!):
+				# know the recipient (the sender should know this!):
 				reject_non_fqdn_recipient,
 				reject_unknown_recipient_domain,
 
-                # don’t become an open relay:
+				# don’t become an open relay:
 				reject_unauth_destination,
 
-                # log rejects:
+				# log rejects:
 				warn_if_reject,
 
-                # check this blacklists:
+				# check this blacklists:
 				reject_rbl_client bl.spamcop.net,
-                reject_rbl_client sbl-xbl.spamhaus.org,
-                reject_rbl_client dnsbl.sorbs.net
+				reject_rbl_client sbl-xbl.spamhaus.org,
+				reject_rbl_client dnsbl.sorbs.net
