@@ -1,0 +1,43 @@
+#
+# anti-spam
+# (thx to http://blog.dest-unreach.be/2011/03/08/my-postfix-anti-spam-configuration)
+#
+# *_restrictions during SMTP commands in order
+#
+
+# force successfull dns reverse lookup
+smtpd_client_restrictions = reject_unknown_client
+
+# Don't talk to mail systems that don't know their own hostname.
+smtpd_helo_restrictions = reject_unknown_helo_hostname
+
+# Don't accept mail from domains that don't exist.
+smtpd_sender_restrictions = reject_unknown_sender_domain
+
+# do most of the checks here to be able to log rejects as warning
+smtpd_recipient_restrictions =	permit_mynetworks,
+
+                # RFC 5321: hostnames need to be fully qualified:
+				reject_non_fqdn_hostname,
+
+                # reject malformed syntax in hostnames:
+                reject_invalid_hostname,
+
+                # know the sender (bounces etc):
+				reject_non_fqdn_sender,
+				reject_unknown_sender_domain,
+
+                # know the recipient (the sender should know this!):
+				reject_non_fqdn_recipient,
+				reject_unknown_recipient_domain,
+
+                # don’t become an open relay:
+				reject_unauth_destination,
+
+                # log rejects:
+				warn_if_reject,
+
+                # check this blacklists:
+				reject_rbl_client bl.spamcop.net,
+                reject_rbl_client sbl-xbl.spamhaus.org,
+                reject_rbl_client dnsbl.sorbs.net
