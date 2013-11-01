@@ -15,7 +15,7 @@ All directorys in the backup directory and not recognized as a backup will be **
 
 All directorys above the maximum backup number will be deleted permanently.
 
-To change the maxumum numbers of backups to be stored:
+To change the maximum numbers of backups to be stored:
 
 1. right click on "backup.bat"
 2. edit
