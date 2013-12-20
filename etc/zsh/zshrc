@@ -1,0 +1,53 @@
+# history
+HISTFILE=~/.histfile
+HISTSIZE=10000
+SAVEHIST=10000
+setopt APPEND_HISTORY 
+
+setopt extendedglob notify
+bindkey -e
+
+#
+# auto completion
+#
+autoload -Uz compinit
+compinit
+setopt autocd
+# correct mistakes:
+setopt CORRECT
+setopt AUTO_LIST
+# allow tab completion in the middle of a word
+setopt COMPLETE_IN_WORD
+# tab completion moves to end of word
+setopt ALWAYS_TO_END
+setopt listtypes 
+
+# allow approximate completion
+zstyle ':completion:*' completer _complete _match _approximate
+zstyle ':completion:*:match:*' original only
+zstyle ':completion:*:approximate:*' max-errors 1 numeric
+
+# history search
+bindkey "^[[A" history-search-backward
+bindkey "^[[B" history-search-forward
+
+# colorful PS1
+autoload colors; colors
+export PS1="%B[%{$fg[green]%}%n%{$reset_color%}%b@%B%{$fg[red]%}%m%b%{$reset_color%}:%{$fg[yellow]%}%~%{$reset_color%}%B]%b "
+
+# must-have-keys
+bindkey "\e[3~" delete-char
+[[ -z "$terminfo[khome]" ]] || bindkey -M emacs "$terminfo[khome]" beginning-of-line
+[[ -z "$terminfo[kend]" ]] || bindkey -M emacs "$terminfo[kend]" end-of-line
+
+# aliases
+alias ls='ls --color=auto -F'
+alias l="ls -hl"
+alias ll="l -a"
+alias grep="grep --color=auto"
+alias egrep="egrep --color=auto"
+alias today="date +%y%m%d"
+alias today2="date +%Y%m%d"
+alias nprocplus1="echo $(($(nproc)+1))"
+# env variables
+export PATH="${PATH}:/sbin/:/usr/sbin/"
