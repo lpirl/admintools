@@ -49,5 +49,6 @@ alias egrep="egrep --color=auto"
 alias today="date +%y%m%d"
 alias today2="date +%Y%m%d"
 alias nprocplus1="echo $(($(nproc)+1))"
+alias nano="nano -cAiw"
 # env variables
 export PATH="${PATH}:/sbin/:/usr/sbin/"
