@@ -53,6 +53,5 @@ do
 		  echo "Copying $LD $BASE..."
 		  $CP $LD $BASE
 		fi
-		exit 1
 	fi
 done
