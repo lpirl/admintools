@@ -20,12 +20,17 @@ setopt AUTO_LIST
 setopt COMPLETE_IN_WORD
 # tab completion moves to end of word
 setopt ALWAYS_TO_END
-setopt listtypes 
+setopt listtypes
+
+unalias run-help
+autoload run-help
 
 # allow approximate completion
 zstyle ':completion:*' completer _complete _match _approximate
 zstyle ':completion:*:match:*' original only
 zstyle ':completion:*:approximate:*' max-errors 1 numeric
+zstyle ':completion:*:sudo:*' command-path /usr/local/sbin /usr/local/bin \
+                             /usr/sbin /usr/bin /sbin /bin /usr/X11R6/bin
 
 # history search
 bindkey "^[[A" history-search-backward
@@ -50,5 +55,3 @@ alias today="date +%y%m%d"
 alias today2="date +%Y%m%d"
 alias nprocplus1="echo $(($(nproc)+1))"
 alias nano="nano -cAiw"
-# env variables
-export PATH="${PATH}:/sbin/:/usr/sbin/"
