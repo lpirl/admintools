@@ -5,6 +5,8 @@
 # aptitude update and safe-upgrade in a screen session in case the is
 # user interaction required
 #
+# (I'd not advice to cron this on mission critical systems)
+#
 
 renice 15 $$
 ionice -c3 -p $$
