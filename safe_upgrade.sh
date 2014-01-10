@@ -17,7 +17,7 @@ CMD=""
 
 for O in update safe-upgrade autoclean
 do
-	CMD+="/usr/bin/aptitude -y $O"
+	CMD+="/usr/bin/aptitude -y $O;"
 done
 
 screen -dmS upgrade bash -xc "$CMD"
