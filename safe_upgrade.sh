@@ -8,8 +8,8 @@
 # (I'd not advice to cron this on mission critical systems)
 #
 
-renice 15 $$
-ionice -c3 -p $$
+(renice 15 $$ || true) > /dev/null
+(ionice -c3 -p $$ || true) > /dev/null
 
 while true; do ping -c1 8.8.8.8 > /dev/null && break; done
 
