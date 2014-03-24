@@ -46,6 +46,7 @@ bindkey "\e[3~" delete-char
 [[ -z "$terminfo[kend]" ]] || bindkey -M emacs "$terminfo[kend]" end-of-line
 
 # aliases
+alias cp='cp --reflink=auto --sparse=always'
 alias ls='ls --color=auto -F'
 alias l="ls -hl"
 alias ll="l -a"
