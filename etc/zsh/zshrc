@@ -21,6 +21,8 @@ setopt COMPLETE_IN_WORD
 # tab completion moves to end of word
 setopt ALWAYS_TO_END
 setopt listtypes
+# a leading space prevents the command from being saved to the history
+setopt HIST_IGNORE_SPACE
 
 unalias run-help
 autoload run-help
