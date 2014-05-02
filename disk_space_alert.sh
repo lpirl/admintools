@@ -32,7 +32,7 @@ MOUNTPOINT=$(echo $DF_LINE | awk '{ print $6}' | sed 's/%//g')
 HOSTNAME=$(hostname -f)
 
 if [ "$PERCENT_USED" -gt "$PERCENT_MAX" ] ; then
-    mail -s "$HOSTNAME disk space alert" root << EOF
+    cat << EOF
 Dear Sir or Madam,
 
 the remaining free disk space on device $1 mounted on $MOUNTPOINT is
@@ -41,5 +41,6 @@ critically low! Used: $PERCENT_USED%
 Sincerely yours,
 
 $(readlink -f "$0")
+
 EOF
 fi
