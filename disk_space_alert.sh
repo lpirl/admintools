@@ -43,4 +43,6 @@ Sincerely yours,
 $(readlink -f "$0")
 
 EOF
+
+exit 1
 fi
