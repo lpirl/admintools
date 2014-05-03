@@ -117,9 +117,9 @@ if __name__ == '__main__':
 
     if current_size > max_quota:
         prefix = converter.get_prefix_from_human_readable(args.quota)
-        logging.critical(
-            "mounts {0} exceed quota of {1}: {2}".format(
-                args.mounts,
+        print(
+            "mounts '{0}' exceed quota of {1}: {2}".format(
+                "', '".join(args.mounts),
                 args.quota,
                 converter.bytes_to_human_readable(current_size, prefix)
             )
