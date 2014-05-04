@@ -211,5 +211,5 @@ run_safely rsync \
 	--exclude='*/Cache/*' \
 	--exclude='*/cache/*' \
 	--rsh="ssh -p $TARGET_PORT" \
-	--rsync-path="rsync --fake-super"
+	--rsync-path="rsync --fake-super" \
 		"${SOURCE}" "${TARGET_USER}@${TARGET_HOST}:${TARGET_DIR}"
