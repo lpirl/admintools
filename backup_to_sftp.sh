@@ -36,7 +36,7 @@ function run_safely {
 	then
 		echo "would run '$*'"
 	else
-		$*
+		sh -c "$*"
 	fi
 }
 
@@ -206,10 +206,10 @@ run_safely rsync \
 	--delete-during \
 	--delete-excluded \
 	--exclude=/tmp \
-	--exclude='*/*\[nb\]/*' \
-	--exclude='*/.cache/*' \
-	--exclude='*/Cache/*' \
-	--exclude='*/cache/*' \
-	--rsh="ssh -p $TARGET_PORT" \
-	--rsync-path="rsync --fake-super" \
+	--exclude=\"*/*\[nb\]/*\" \
+	--exclude=\"*/.cache/*\" \
+	--exclude=\"*/Cache/*\" \
+	--exclude=\"*/cache/*\" \
+	--rsh=\"ssh -p $TARGET_PORT\" \
 		"${SOURCE}" "${TARGET_USER}@${TARGET_HOST}:${TARGET_DIR}"
+	#~ --rsync-path=\"rsync --fake-super\" \
