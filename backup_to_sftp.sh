@@ -185,7 +185,7 @@ done
 #
 if [ $CLEAN_HISTORY_DIR -eq 1 ]
 then
-	run_safely sh -c "echo \"rm -rf ${HISTORY_DIR}/*\" | \
+	run_safely sh -c "echo \"rm -rf ${HISTORY_DIR}; mkdir ${HISTORY_DIR}\" | \
 		lftp -p $TARGET_PORT -u $TARGET_USER, sftp://${TARGET_HOST}"
 fi
 
