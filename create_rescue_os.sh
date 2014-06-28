@@ -26,15 +26,16 @@
 function error {
 	args="${*:1}"
 	echo "ERROR:" ${args[@]}
+	echo "exiting"
 	exit 1
 }
 
-function varcheck { # name
+function var_detect_check { # name
 	VALUE=$(eval "echo \$${1}")
 	echo "${1}=${VALUE}"
 	if [ "${VALUE}" = "" ]
 	then
-	        error "variable empty!"
+	        error "could not detect '${1}'"
 	fi
 }
 
@@ -67,13 +68,13 @@ then
 fi
 
 TARGET_UUID="$1"
-varcheck TARGET_UUID
+var_detect_check TARGET_UUID
 
 MOUNTPOINT=$( grep -v "^#" /etc/fstab | grep $TARGET_UUID | awk '{print $2}')
-varcheck MOUNTPOINT
+var_detect_check MOUNTPOINT
 
 DEVICE=$(blkid | grep $TARGET_UUID | cut -d: -f1 | sed 's/[0-9]*$//g')
-varcheck DEVICE
+var_detect_check DEVICE
 
 $MOUNT $MOUNTPOINT
 
@@ -82,7 +83,7 @@ $MOUNT $MOUNTPOINT
 #
 if [ $(df "/" "${MOUNTPOINT}" | sort -u | wc -l) -ne 3 ]
 then
-	error "target seems not to be mounted!"
+	error "target could not to be mounted"
 fi
 
 #
