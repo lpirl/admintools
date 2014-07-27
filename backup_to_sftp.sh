@@ -206,7 +206,7 @@ run_safely rsync \
 	--delete-during \
 	--delete-excluded \
 	--exclude=/tmp \
-	--exclude=\"*/*\[nb\]/*\" \
+	--exclude=\"*\\[nb\\]/*\" \
 	--exclude=\"*/.cache/*\" \
 	--exclude=\"*/Cache/*\" \
 	--exclude=\"*/cache/*\" \
