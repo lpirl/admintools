@@ -24,6 +24,11 @@ function show_help {
 	echo "Good luck."
 }
 
+######################################################################
+#
+# functions
+#
+
 function errormsg_help_exit {
 	echo "ERROR: $*"
 	echo
@@ -38,6 +43,13 @@ function run_safely {
 	else
 		sh -c "$*"
 	fi
+}
+
+function lftp_do {
+	OPTS="set net:reconnect-interval-base 10;"
+	OPTS+="set net:max-retries 1;"
+	OPTS+="set net:timeout 10;"
+	lftp -p $TARGET_PORT -u $TARGET_USER, -e "$OPTS $1" sftp://${TARGET_HOST}
 }
 
 #######################################################################
@@ -144,7 +156,6 @@ TARGET_DIR="$2"
 type lftp > /dev/null || exit 1
 type rsync > /dev/null || exit 1
 
-
 #######################################################################
 #
 # make sure only one instance runs at a time
@@ -168,7 +179,7 @@ echo $$ > $PIDFILE
 # wait until the target host is reachable
 #
 function is_online() {
-	echo quit | lftp -p $TARGET_PORT -u $TARGET_USER, sftp://${TARGET_HOST}
+	lftp_do "ls; quit"
 	echo $?
 }
 
@@ -185,8 +196,7 @@ done
 #
 if [ $CLEAN_HISTORY_DIR -eq 1 ]
 then
-	run_safely sh -c "echo \"rm -rf ${HISTORY_DIR}; mkdir ${HISTORY_DIR}\" | \
-		lftp -p $TARGET_PORT -u $TARGET_USER, sftp://${TARGET_HOST}"
+	run_safely lftp_do \"rm -rf ${HISTORY_DIR}; mkdir ${HISTORY_DIR}\"
 fi
 
 #######################################################################
