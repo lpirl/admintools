@@ -52,6 +52,23 @@ function lftp_do {
 	lftp -p $TARGET_PORT -u $TARGET_USER, -e "$OPTS $1" sftp://${TARGET_HOST}
 }
 
+
+
+#######################################################################
+#
+# bash & process setup
+#
+
+# make us low priority
+renice 10 $$
+# even for IO:
+ionice -c3 -p$$
+
+# exit on any error:
+set -e
+set -o pipefail
+
+
 #######################################################################
 #
 # parse CLI options
@@ -179,7 +196,7 @@ echo $$ > $PIDFILE
 # wait until the target host is reachable
 #
 function is_online() {
-	lftp_do "ls; quit"
+	lftp_do "ls; quit" > /dev/null
 	echo $?
 }
 
@@ -196,7 +213,18 @@ done
 #
 if [ $CLEAN_HISTORY_DIR -eq 1 ]
 then
-	run_safely lftp_do \"rm -rf ${HISTORY_DIR}; mkdir ${HISTORY_DIR}\"
+	EMPTY_DIR=$(mktemp -d)
+
+	# just to be sure…
+	[ "$EMPTY_DIR" = "" ] && exit
+
+	rsync \
+		--verbose \
+		--verbose \
+		--archive \
+		--delete \
+			"${EMPTY_DIR}/" "${TARGET_USER}@${TARGET_HOST}:${HISTORY_DIR}"
+	rmdir "${EMPTY_DIR}/"
 fi
 
 #######################################################################
