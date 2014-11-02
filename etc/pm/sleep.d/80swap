@@ -1,0 +1,15 @@
+#!/bin/bash
+case $1 in
+	hibernate)
+		swapon -a
+	;;
+	suspend)
+	;;
+	thaw)
+		nohup nice -n19 ionice -c3 sh -c "until swapoff -a; do sleep 10; done" > /dev/null &
+	;;
+	resume)
+	;;
+	*)
+	;;
+esac
