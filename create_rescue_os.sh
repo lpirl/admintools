@@ -3,9 +3,8 @@
 # This scripts is intended to regularly create a bootalbe backup of the
 # operating system.
 #
-# Even a USB-key is suitable to backup to. This is probably the cheapest
-# way to enable a relatively fast, manual failover without running RAID
-# configurations.
+# Even a USB-key is suitable to backup to. This way, you can do a
+# relatively fast, manual failover in case your boot medium fails.
 #
 # !!! The backup must reside on a separate partition !!!
 #
