@@ -1,0 +1,9 @@
+[user]
+	email = git@lukas-pirl.de
+	name = Lukas Pirl
+[color]
+	ui = auto
+[push]
+	default = matching
+[credential]
+	helper = /usr/share/doc/git/contrib/credential/gnome-keyring/git-credential-gnome-keyring
