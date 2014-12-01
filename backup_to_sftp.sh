@@ -166,6 +166,7 @@ TARGET_DIR="$2"
 
 
 
+
 #######################################################################
 #
 # check dependencies
@@ -209,6 +210,13 @@ done
 
 #######################################################################
 #
+# assemble default rsync command
+#
+RSYNC="run_safely rsync --rsh='ssh -p $TARGET_PORT' --verbose --verbose"
+
+
+#######################################################################
+#
 # clean the history
 #
 if [ $CLEAN_HISTORY_DIR -eq 1 ]
@@ -218,9 +226,7 @@ then
 	# just to be sure…
 	[ "$EMPTY_DIR" = "" ] && exit
 
-	rsync \
-		--verbose \
-		--verbose \
+	$RSYNC \
 		--archive \
 		--delete \
 			"${EMPTY_DIR}/" "${TARGET_USER}@${TARGET_HOST}:${HISTORY_DIR}"
@@ -231,9 +237,7 @@ fi
 #
 # copy
 #
-run_safely rsync \
-	--verbose \
-	--verbose \
+$RSYNC \
 	--progress \
 	--human-readable \
 	--one-file-system \
@@ -248,6 +252,5 @@ run_safely rsync \
 	--exclude=\"*/.cache/*\" \
 	--exclude=\"*/Cache/*\" \
 	--exclude=\"*/cache/*\" \
-	--rsh=\"ssh -p $TARGET_PORT\" \
 		"${SOURCE}" "${TARGET_USER}@${TARGET_HOST}:${TARGET_DIR}"
 	#~ --rsync-path=\"rsync --fake-super\" \
