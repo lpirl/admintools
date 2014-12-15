@@ -237,17 +237,17 @@ fi
 #
 # copy
 #
-RSYNC_OPTS+= --progress
-RSYNC_OPTS+= --human-readable
-RSYNC_OPTS+= --one-file-system
-RSYNC_OPTS+= --archive
-RSYNC_OPTS+= --delete-during
-RSYNC_OPTS+= --delete-excluded
-RSYNC_OPTS+= --exclude=/tmp
-RSYNC_OPTS+= --exclude=\"*\\[nb\\]/*\"
-RSYNC_OPTS+= --exclude=\"*/.cache/*\"
-RSYNC_OPTS+= --exclude=\"*/Cache/*\"
-RSYNC_OPTS+= --exclude=\"*/cache/*\"
+RSYNC_OPTS+=' --progress'
+RSYNC_OPTS+=' --human-readable'
+RSYNC_OPTS+=' --one-file-system'
+RSYNC_OPTS+=' --archive'
+RSYNC_OPTS+=' --delete-during'
+RSYNC_OPTS+=' --delete-excluded'
+RSYNC_OPTS+=' --exclude=/tmp'
+RSYNC_OPTS+=' --exclude="*\\[nb\\]/*"'
+RSYNC_OPTS+=' --exclude="*/.cache/*"'
+RSYNC_OPTS+=' --exclude="*/Cache/*"'
+RSYNC_OPTS+=' --exclude="*/cache/*"'
 
 if [ "$(uname -o)" != "Cygwin" ]
 then
