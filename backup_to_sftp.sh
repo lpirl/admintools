@@ -87,7 +87,7 @@ RETRY_TIMEOUT=60								# -t
 DRY_RUN=0										# -d
 NO_RETRY=0										# -n
 PIDFILE=/var/lock/$(basename $0)_$(whoami).lock
-HISTORY_OPTS=""
+RSYNC_OPTS=""
 
 while getopts "h?u:p:b:s:cdn" opt; do
 	case "$opt" in
@@ -126,7 +126,7 @@ while getopts "h?u:p:b:s:cdn" opt; do
 			exit 1
 		fi
 		HISTORY_DIR=$OPTARG
-		HISTORY_OPTS="--backup --backup-dir=$HISTORY_DIR"
+		RSYNC_OPTS="--backup --backup-dir=$HISTORY_DIR"
 		;;
 	c)	CLEAN_HISTORY_DIR=1
 		;;
@@ -237,20 +237,25 @@ fi
 #
 # copy
 #
+RSYNC_OPTS+= --progress
+RSYNC_OPTS+= --human-readable
+RSYNC_OPTS+= --one-file-system
+RSYNC_OPTS+= --archive
+RSYNC_OPTS+= --delete-during
+RSYNC_OPTS+= --delete-excluded
+RSYNC_OPTS+= --exclude=/tmp
+RSYNC_OPTS+= --exclude=\"*\\[nb\\]/*\"
+RSYNC_OPTS+= --exclude=\"*/.cache/*\"
+RSYNC_OPTS+= --exclude=\"*/Cache/*\"
+RSYNC_OPTS+= --exclude=\"*/cache/*\"
+
+if [ "$(uname -o)" != "Cygwin" ]
+then
+	RSYNC_OPTS+= --xattrs
+	RSYNC_OPTS+= --acls
+fi
+
 $RSYNC \
-	--progress \
-	--human-readable \
-	--one-file-system \
-	--archive \
-	--xattrs \
-	--acls \
-	$HISTORY_OPTS \
-	--delete-during \
-	--delete-excluded \
-	--exclude=/tmp \
-	--exclude=\"*\\[nb\\]/*\" \
-	--exclude=\"*/.cache/*\" \
-	--exclude=\"*/Cache/*\" \
-	--exclude=\"*/cache/*\" \
-		"${SOURCE}" "${TARGET_USER}@${TARGET_HOST}:${TARGET_DIR}"
-	#~ --rsync-path=\"rsync --fake-super\" \
+	$RSYNC_OPTS \
+		"${SOURCE}" \
+		"${TARGET_USER}@${TARGET_HOST}:${TARGET_DIR}"
