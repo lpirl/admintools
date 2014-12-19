@@ -40,7 +40,7 @@ bindkey "^[[B" history-search-forward
 
 # colorful PS1
 autoload colors; colors
-export PS1="%B[%{$fg[green]%}%n%{$reset_color%}%b@%B%{$fg[red]%}%m%b%{$reset_color%}:%{$fg[yellow]%}%~%{$reset_color%}%B]%b "
+export PS1="%B[%{$fg[green]%}%n%{$reset_color%}%b@%B%{$fg[red]%}%M%b%{$reset_color%}:%{$fg[yellow]%}%~%{$reset_color%}%B]%b "
 
 # must-have-keys
 bindkey "\e[3~" delete-char
