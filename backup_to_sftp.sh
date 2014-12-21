@@ -178,9 +178,9 @@ type rsync > /dev/null || exit 1
 #
 if [ -d /var/lock ]
 then
-	PIDFILE=/var/lock
+	PIDFILE=/var/lock/$PIDFILE_NAME
 else
-	PIDFILE=/tmp
+	PIDFILE=/tmp/$PIDFILE_NAME
 fi
 if [ -e $PIDFILE ]; then
 	PID=`cat $PIDFILE`
@@ -255,8 +255,8 @@ RSYNC_OPTS+=' --exclude="*/cache/*"'
 
 if [ "$(uname -o)" != "Cygwin" ]
 then
-	RSYNC_OPTS+= --xattrs
-	RSYNC_OPTS+= --acls
+	RSYNC_OPTS+=" --xattrs"
+	RSYNC_OPTS+=" --acls"
 fi
 
 $RSYNC \
