@@ -86,7 +86,7 @@ CLEAN_HISTORY_DIR=0								# -c
 RETRY_TIMEOUT=60								# -t
 DRY_RUN=0										# -d
 NO_RETRY=0										# -n
-PIDFILE=/var/lock/$(basename $0)_$(whoami).lock
+PIDFILE_NAME=$(basename $0)_$(whoami).lock
 RSYNC_OPTS=""
 
 while getopts "h?u:p:b:s:cdn" opt; do
@@ -165,8 +165,6 @@ fi
 TARGET_DIR="$2"
 
 
-
-
 #######################################################################
 #
 # check dependencies
@@ -178,6 +176,12 @@ type rsync > /dev/null || exit 1
 #
 # make sure only one instance runs at a time
 #
+if [ -d /var/lock ]
+then
+	PIDFILE=/var/lock
+else
+	PIDFILE=/tmp
+fi
 if [ -e $PIDFILE ]; then
 	PID=`cat $PIDFILE`
 	if kill -0 &>1 > /dev/null $PID; then
