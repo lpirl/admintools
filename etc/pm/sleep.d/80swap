@@ -1,12 +1,15 @@
 #!/bin/bash
 case $1 in
 	hibernate)
-		swapon -a
+		swapon -a `egrep "^[^#].*\sswap\s" /etc/fstab | \
+						awk '{print $1}' | \
+						tr "\n" " "`
 	;;
 	suspend)
 	;;
 	thaw)
-		nohup nice -n19 ionice -c3 sh -c "until swapoff -a; do sleep 10; done" > /dev/null &
+		nohup nice -n19 ionice -c3 \
+			sh -c "until swapoff -a; do sleep 10; done" > /dev/null &
 	;;
 	resume)
 	;;
