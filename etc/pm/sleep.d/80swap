@@ -1,7 +1,7 @@
 #!/bin/bash
 case $1 in
 	hibernate)
-		swapon -a `egrep "^[^#].*\sswap\s" /etc/fstab | \
+		swapon `egrep "^[^#].*\sswap\s" /etc/fstab | \
 						awk '{print $1}' | \
 						tr "\n" " "`
 	;;
