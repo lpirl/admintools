@@ -1,1 +1,0 @@
-CHROMIUM_FLAGS="--disk-cache-dir=/run/user/$(id -u)/chromium_cache"
