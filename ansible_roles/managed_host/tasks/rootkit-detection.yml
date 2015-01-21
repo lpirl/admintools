@@ -1,0 +1,5 @@
+- name: install rkhunter
+  apt: package=rkhunter
+
+- name: install chkrootkit
+  apt: package=chkrootkit

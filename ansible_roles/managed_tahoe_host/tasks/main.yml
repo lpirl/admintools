@@ -1,0 +1,13 @@
+- name: create tahoe user
+  user: name={{tahoe_user}}
+
+- name: install PIP
+  apt: package=python-pip
+
+- name: install Python headers
+  apt: package=python-dev
+
+- name: install FFI headers
+  apt: package=libffi-dev
+
+- include: nginx.yml

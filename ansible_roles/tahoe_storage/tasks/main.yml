@@ -1,0 +1,5 @@
+- name: enable the storage server in configuration
+  ini_file: dest="{{ tahoe_basedir }}/node/tahoe.cfg"
+            section=storage
+            option=enabled
+            value=true

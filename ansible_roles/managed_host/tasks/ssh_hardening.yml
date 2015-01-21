@@ -1,0 +1,144 @@
+- name: check ssh to be from 2015 or later
+  register: ssh_ge2015
+  shell: "[ `ssh -V 2>&1 | cut -d' ' -f7` -ge 2015 ]"
+  changed_when: false
+  failed_when: false
+
+- name: check ssh to be from 2014
+  register: ssh_2014
+  shell: "[ `ssh -V 2>&1 | cut -d' ' -f7` -eq 2014 ]"
+  changed_when: false
+  failed_when: false
+
+- name: check ssh to be from 2014 or less
+  register: ssh_lt2014
+  shell: "[ `ssh -V 2>&1 | cut -d' ' -f7` -lt 2014 ]"
+  changed_when: false
+  failed_when: false
+
+
+
+- name: add comment about ssh hardening tutorial
+  lineinfile: line="# SSH hardening (2015) https://stribika.github.io/2015/01/04/secure-secure-shell.html"
+              dest="/etc/ssh/sshd_config"
+              insertbefore=BOF
+
+
+
+- name: restricting supported key exchange protocols for server (>=2014)
+  lineinfile: line="KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256"
+              regexp="^#?KexAlgorithms\s.*"
+              dest="/etc/ssh/sshd_config"
+              insertafter="^\s*HostKey\s.*"
+  when: ssh_ge2015.rc == 0 or ssh_2014.rc == 0
+
+- name: restricting supported key exchange protocols for server (<2014)
+  lineinfile: line="KexAlgorithms diffie-hellman-group-exchange-sha256"
+              regexp="^#?KexAlgorithms\s.*"
+              dest="/etc/ssh/sshd_config"
+              insertafter="^\s*HostKey\s.*"
+  when: ssh_lt2014.rc == 0
+
+
+
+- name: disable bad authentication algorithm DSA
+  lineinfile: state=absent
+              regexp="^\s*HostKey\s.*_dsa_.*"
+              dest="/etc/ssh/sshd_config"
+
+- name: disabling DSA host key
+  register: disable_dsa_host_key_result
+  shell: "find /etc/ssh -iname '*_dsa_*' -not -name '*INSECURE' -exec rename -v 's/(.*)/$1.INSECURE/' {} \\;"
+  changed_when: disable_dsa_host_key_result.stdout != ""
+
+- name: disable bad authentication algorithm ECDSA
+  lineinfile: state=absent
+              regexp="^\s*HostKey\s.*_ecdsa_.*"
+              dest="/etc/ssh/sshd_config"
+
+
+
+- name: enable good authentication algorithm Ed25519 (>=2015)
+  lineinfile: line="HostKey /etc/ssh/ssh_host_ed25519_key"
+              regexp="^\s*HostKey\s.*_ed25519_.*"
+              insertafter="^\s*HostKey\s.*"
+              dest="/etc/ssh/sshd_config"
+  when: ssh_ge2015.rc == 0
+
+- name: check if Ed25519 host key exists
+  register: check_ed25519_host_key
+  stat: path=/etc/ssh/ssh_host_ed25519_key
+
+- name: create Ed25519 host key
+  shell: "ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key < /dev/null"
+  when: ssh_ge2015.rc == 0 and check_ed25519_host_key.stat.exists == false
+
+
+
+- name: enable good authentication algorithm RSA
+  lineinfile: line="HostKey /etc/ssh/ssh_host_rsa_key"
+              regexp="^\s*HostKey\s.*_rsa_.*"
+              insertafter="^\s*HostKey\s.*"
+              dest="/etc/ssh/sshd_config"
+
+- name: check if RSA host key exists
+  register: check_rsa_host_key
+  stat: path=/etc/ssh/ssh_host_rsa_key
+
+- name: create RSA host key
+  shell: "ssh-keygen -t rsa -b 8192 -f /etc/ssh/ssh_host_rsa_key < /dev/null"
+  when: check_rsa_host_key.stat.exists == false
+
+
+
+- name: check RSA host key length
+  register: check_rsa_host_key_length
+  shell: '[ `ssh-keygen -lf /etc/ssh/ssh_host_rsa_key.pub | cut -d" " -f1` -lt 4096 ]'
+  changed_when: false
+  failed_when: false
+
+- name: disable insecure RSA host key (too short)
+  register: disable_rsa_host_key_result
+  shell: "find /etc/ssh -iname '*_rsa_*' -not -name '*INSECURE' -exec rename -v 's/(.*)/$1.INSECURE/' {} \\;"
+  changed_when: disable_rsa_host_key_result.stdout != ""
+  when: check_rsa_host_key_length.rc == 0
+
+- name: re-create RSA host key
+  shell: "ssh-keygen -t rsa -b 8192 -f /etc/ssh/ssh_host_rsa_key < /dev/null"
+  when: check_rsa_host_key_length.rc == 0
+
+
+
+- name: restricting supported symmetric ciphers for server (>=2014)
+  lineinfile: line="Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr"
+              regexp="^#?Ciphers\s.*"
+              dest="/etc/ssh/sshd_config"
+              insertafter="^\s*HostKey\s.*"
+  when: ssh_ge2015.rc == 0 or ssh_2014.rc == 0
+
+- name: restricting supported symmetric ciphers for server (<2014)
+  lineinfile: line="Ciphers aes256-ctr,aes192-ctr,aes128-ctr"
+              regexp="^#?Cyphers\s.*"
+              dest="/etc/ssh/sshd_config"
+              insertafter="^\s*HostKey\s.*"
+  when: ssh_lt2014.rc == 0
+
+
+
+- name: restricting supported message authentication codes for server (>=2014)
+  lineinfile: line="MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-ripemd160-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,hmac-ripemd160"
+              regexp="^#?MACs\s.*"
+              dest="/etc/ssh/sshd_config"
+              insertafter="^\s*HostKey\s.*"
+  when: ssh_ge2015.rc == 0 or ssh_2014.rc == 0
+
+- name: restricting supported message authentication codes for server (<2014)
+  lineinfile: line="MACs hmac-sha2-512-96,hmac-sha2-512,hmac-sha2-256,hmac-ripemd160"
+              regexp="^#?MACs\s.*"
+              dest="/etc/ssh/sshd_config"
+              insertafter="^\s*HostKey\s.*"
+  when: ssh_lt2014.rc == 0
+
+# TODO: create & use a handler
+- name: restart sshd
+  service: name=ssh state=restarted

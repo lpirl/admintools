@@ -1,0 +1,2 @@
+- include: application_caches.yml
+- include: check_tmpfs_mounts.yml
