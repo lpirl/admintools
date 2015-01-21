@@ -8,3 +8,4 @@
 - include: umask.yml
 - include: ntp.yml
 - include: ssh_hardening.yml
+- include: apt-dater.yml
