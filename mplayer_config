@@ -1,0 +1,8 @@
+vm=yes
+framedrop = no
+
+# 128 mb:
+cache = 131072
+
+cache-min = 1.0
+cache-seek-min = 1.0
