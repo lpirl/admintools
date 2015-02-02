@@ -49,7 +49,7 @@ bindkey "\e[3~" delete-char
 
 # aliases
 alias cp='cp --reflink=auto --sparse=always'
-alias ls='ls --color=auto -F'
+alias ls='ls --color=auto -F --time-style=+"%Y-%m-%d %H:%M:%S"'
 alias l="ls -hl"
 alias ll="l -a"
 alias grep="grep --color=auto"
