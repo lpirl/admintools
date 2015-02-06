@@ -6,13 +6,4 @@
   command: "tahoe create-client -C {{ tahoe_basedir }}/node"
   when: check_node_dir.stat.exists == false
 
-- name: provide default configuration
-  copy: src=tahoe-default.cfg
-        dest="{{ tahoe_basedir }}/node/tahoe.cfg"
-        force=no
-
-- name: set introducer furl
-  ini_file: dest="{{ tahoe_basedir }}/node/tahoe.cfg"
-            section=client
-            option=introducer.furl
-            value='{{ introducer_furl }}'
+- include: configuration.yml
