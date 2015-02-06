@@ -1,18 +1,18 @@
-- name: check ssh to be from 2015 or later
-  register: ssh_ge2015
-  shell: "[ `ssh -V 2>&1 | cut -d' ' -f7` -ge 2015 ]"
+- name: check ssh version to be 6.7 or later
+  register: ssh_ge6p7
+  shell: 'T="OpenSSH_6.7"; [ "`echo "$T\n$(ssh -V 2>&1 | cut -d, -f1)" | sort | head -n1`" = "$T" ]'
   changed_when: false
   failed_when: false
 
-- name: check ssh to be from 2014
-  register: ssh_2014
-  shell: "[ `ssh -V 2>&1 | cut -d' ' -f7` -eq 2014 ]"
+- name: check ssh version to be 6.6
+  register: ssh_6p6
+  command: bash -c '[[ "$(ssh -V 2>&1)" = "OpenSSH_6.6"[.p]* ]]'
   changed_when: false
   failed_when: false
 
-- name: check ssh to be from 2014 or less
-  register: ssh_lt2014
-  shell: "[ `ssh -V 2>&1 | cut -d' ' -f7` -lt 2014 ]"
+- name: check ssh version to be 6.0 or less
+  register: ssh_lt6p0
+  shell: 'T="OpenSSH_6.1"; [ "`echo "$T\n$(ssh -V 2>&1 | cut -d, -f1)" | sort | tail -n1`" = "$T" ]'
   changed_when: false
   failed_when: false
 
@@ -25,19 +25,19 @@
 
 
 
-- name: restricting supported key exchange protocols for server (>=2014)
+- name: restricting supported key exchange protocols for server (>=6.6)
   lineinfile: line="KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256"
               regexp="^#?KexAlgorithms\s.*"
               dest="/etc/ssh/sshd_config"
               insertafter="^\s*HostKey\s.*"
-  when: ssh_ge2015.rc == 0 or ssh_2014.rc == 0
+  when: ssh_ge6p7.rc == 0 or ssh_6p6.rc == 0
 
-- name: restricting supported key exchange protocols for server (<2014)
+- name: restricting supported key exchange protocols for server (<6.0)
   lineinfile: line="KexAlgorithms diffie-hellman-group-exchange-sha256"
               regexp="^#?KexAlgorithms\s.*"
               dest="/etc/ssh/sshd_config"
               insertafter="^\s*HostKey\s.*"
-  when: ssh_lt2014.rc == 0
+  when: ssh_lt6p0.rc == 0
 
 
 
@@ -58,12 +58,12 @@
 
 
 
-- name: enable good authentication algorithm Ed25519 (>=2015)
+- name: enable good authentication algorithm Ed25519 (>=6.7)
   lineinfile: line="HostKey /etc/ssh/ssh_host_ed25519_key"
               regexp="^\s*HostKey\s.*_ed25519_.*"
               insertafter="^\s*HostKey\s.*"
               dest="/etc/ssh/sshd_config"
-  when: ssh_ge2015.rc == 0
+  when: ssh_ge6p7.rc == 0
 
 - name: check if Ed25519 host key exists
   register: check_ed25519_host_key
@@ -71,7 +71,7 @@
 
 - name: create Ed25519 host key
   shell: "ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key < /dev/null"
-  when: ssh_ge2015.rc == 0 and check_ed25519_host_key.stat.exists == false
+  when: ssh_ge6p7.rc == 0 and check_ed25519_host_key.stat.exists == false
 
 
 
@@ -109,35 +109,35 @@
 
 
 
-- name: restricting supported symmetric ciphers for server (>=2014)
+- name: restricting supported symmetric ciphers for server (>=6.6)
   lineinfile: line="Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr"
               regexp="^#?Ciphers\s.*"
               dest="/etc/ssh/sshd_config"
               insertafter="^\s*HostKey\s.*"
-  when: ssh_ge2015.rc == 0 or ssh_2014.rc == 0
+  when: ssh_ge6p7.rc == 0 or ssh_6p6.rc == 0
 
-- name: restricting supported symmetric ciphers for server (<2014)
+- name: restricting supported symmetric ciphers for server (<=6.0)
   lineinfile: line="Ciphers aes256-ctr,aes192-ctr,aes128-ctr"
               regexp="^#?Cyphers\s.*"
               dest="/etc/ssh/sshd_config"
               insertafter="^\s*HostKey\s.*"
-  when: ssh_lt2014.rc == 0
+  when: ssh_lt6p0.rc == 0
 
 
 
-- name: restricting supported message authentication codes for server (>=2014)
-  lineinfile: line="MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-ripemd160-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,hmac-ripemd160"
+- name: restricting supported message authentication codes for server (>=6.6)
+  lineinfile: line="MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-ripemd160-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,hmac-ripemd160{{sshd_extra_macs}}"
               regexp="^#?MACs\s.*"
               dest="/etc/ssh/sshd_config"
               insertafter="^\s*HostKey\s.*"
-  when: ssh_ge2015.rc == 0 or ssh_2014.rc == 0
+  when: ssh_ge6p7.rc == 0 or ssh_6p6.rc == 0
 
-- name: restricting supported message authentication codes for server (<2014)
-  lineinfile: line="MACs hmac-sha2-512-96,hmac-sha2-512,hmac-sha2-256,hmac-ripemd160"
+- name: restricting supported message authentication codes for server (<=6.0)
+  lineinfile: line="MACs hmac-sha2-512-96,hmac-sha2-512,hmac-sha2-256,hmac-ripemd160{{sshd_extra_macs}}"
               regexp="^#?MACs\s.*"
               dest="/etc/ssh/sshd_config"
               insertafter="^\s*HostKey\s.*"
-  when: ssh_lt2014.rc == 0
+  when: ssh_lt6p0.rc == 0
 
 # TODO: create & use a handler
 - name: restart sshd
