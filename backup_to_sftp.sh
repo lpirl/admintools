@@ -201,7 +201,7 @@ echo $$ > $PIDFILE
 # wait until the target host is reachable
 #
 function is_online() {
-	lftp_do "ls; quit" > /dev/null
+	lftp_do "quit" > /dev/null
 	echo $?
 }
 
