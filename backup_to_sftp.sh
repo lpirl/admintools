@@ -223,8 +223,13 @@ RSYNC="run_safely rsync --rsh='ssh -p $TARGET_PORT' --verbose --verbose"
 #
 # clean the history
 #
-if [ $CLEAN_HISTORY_DIR -eq 1 ] && [ "$HISTORY_DIR" != "" ]
+if [ $CLEAN_HISTORY_DIR -eq 1 ]
 then
+	if [ "$HISTORY_DIR" = "" ]
+	then
+		echo "cannot clear the backup (-c) without a backup directory (-b)"
+		exit 1
+	fi
 	EMPTY_DIR=$(mktemp -d)
 
 	# just to be sure…
