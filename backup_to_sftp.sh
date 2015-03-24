@@ -223,7 +223,7 @@ RSYNC="run_safely rsync --rsh='ssh -p $TARGET_PORT' --verbose --verbose"
 #
 # clean the history
 #
-if [ $CLEAN_HISTORY_DIR -eq 1 ]
+if [ $CLEAN_HISTORY_DIR -eq 1 ] && [ "$HISTORY_DIR" != "" ]
 then
 	EMPTY_DIR=$(mktemp -d)
 
