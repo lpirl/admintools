@@ -45,13 +45,6 @@ function run_safely {
 	fi
 }
 
-function lftp_do {
-	OPTS="set net:reconnect-interval-base 10;"
-	OPTS+="set net:max-retries 1;"
-	OPTS+="set net:timeout 10;"
-	lftp -p $TARGET_PORT -u $TARGET_USER, -e "$OPTS $1" sftp://${TARGET_HOST}
-}
-
 
 
 #######################################################################
@@ -169,7 +162,6 @@ TARGET_DIR="$2"
 #
 # check dependencies
 #
-type lftp > /dev/null || exit 1
 type rsync > /dev/null || exit 1
 
 #######################################################################
@@ -201,7 +193,7 @@ echo $$ > $PIDFILE
 # wait until the target host is reachable
 #
 function is_online() {
-	lftp_do "quit" > /dev/null
+	echo "ls" | sftp -P $TARGET_PORT  "${TARGET_USER}@${TARGET_HOST}" > /dev/null
 	echo $?
 }
 
