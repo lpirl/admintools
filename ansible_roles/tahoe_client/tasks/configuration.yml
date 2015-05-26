@@ -28,10 +28,10 @@
             value=mdmf
 
 ############################ encoding ############################
-# we need k out of N servers at min to recover.
-# but normally, we want to download from k'=N servers
-# servers can serve multiple shares, so k'>=N is okay too
-# to keep k' and N integers, the smallest possible multiplier is 2.
+# We need k out of N servers at min to recover.
+# But normally, we want to download from k'=N servers.
+# Servers can serve multiple shares, so k'>=N is okay too.
+# To keep k' and N integers, the smallest possible multiplier is 2.
 
 - name: calculate shares total
   register: shares_total
@@ -53,9 +53,12 @@
             option=shares.happy
             value="{{shares_happy.stdout}}"
 
+# If we set N = 2*[number of servers] (see above), every server ends up
+# with 2 of N shares in average. So we want to be able to tolerate the
+# loss of N - 2 * [number of tolerable failed nodes] shares.
 - name: calculate shares needed
   register: shares_needed
-  shell: 'echo "$(({{shares_happy.stdout}} - {{storage_nodes_tolerable_failures_count}}))"'
+  shell: 'echo "$(({{shares_total.stdout}} - 2 * {{storage_nodes_tolerable_failures_count}}))"'
   changed_when: false
 - name: set encoding parameter shares.needed
   ini_file: dest="{{ tahoe_basedir }}/node/tahoe.cfg"

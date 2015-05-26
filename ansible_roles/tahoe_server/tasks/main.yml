@@ -8,7 +8,7 @@
   ini_file: dest="{{ tahoe_basedir }}/node/tahoe.cfg"
             section=node
             option=tub.location
-            value='{{ node_location }}:{{ node_port }}'
+            value='{{ node_location }}:{{ node_port }},AUTO'
 
 - name: start node at boot
   cron: name="start tahoe node at boot"
