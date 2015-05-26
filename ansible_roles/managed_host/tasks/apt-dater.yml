@@ -7,9 +7,10 @@
 - name: create apt-dater user
   user: name=apt-dater
 
-- name: allow the apt-dater user to use aptitude and apt-get
+- name: allow the apt-dater user to use aptitude, apt-get and needrestart
   lineinfile: " dest=/etc/sudoers.d/apt-dater-host
-                line='apt-dater ALL=NOPASSWD: /usr/bin/apt-get, /usr/bin/aptitude'"
+                regexp='^apt-dater ALL=NOPASSWD:.*'
+                line='apt-dater ALL=NOPASSWD: /usr/bin/apt-get, /usr/bin/aptitude, /usr/sbin/needrestart'"
 
 - name: make sure there are no other sudo grants for the apt-dater user
   shell: "[ `sudo -lU apt-dater | grep -c NOPASSWD` -eq 1 ]"
