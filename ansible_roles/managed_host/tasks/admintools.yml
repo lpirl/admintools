@@ -15,7 +15,7 @@
   shell: "chmod -cR o+rx --changes /opt/admintools"
   changed_when: chmod_no_write_access_result.stdout != ""
 
-- name: ensure no suid/sgid access to admintools
+- name: ensure no suid/sgid bit set in admintools
   register: chmod_no_sid_access_result
   shell: "chmod -cR a-s /opt/admintools"
   changed_when: chmod_no_sid_access_result.stdout != ""
