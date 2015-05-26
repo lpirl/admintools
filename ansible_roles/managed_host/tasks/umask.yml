@@ -12,6 +12,13 @@
               line='umask 077'
               create=yes
 
+- name: set default umask to 077 (login.defs)
+  register: set_umask_logindefs
+  lineinfile: dest=/etc/login.defs
+              regexp='^UMASK\s+[0-9]+'
+              line='UMASK           077'
+              create=yes
+
 - name: check umask for root to be at least 026
   register: root_umask_result
   shell:  "sh -c '[ $(umask) -ge 26 ]'"
