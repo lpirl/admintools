@@ -1,2 +1,4 @@
 # make sure the fit in a line like "a,b,c{sshd_extra_macs}
 sshd_extra_macs: ""
+sshd_extra_kex: ""
+ssh_needs_ecdsa_host_key: False
