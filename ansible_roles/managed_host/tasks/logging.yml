@@ -16,6 +16,11 @@
   ignore_errors: True
   register: postfix_is_installed
 
-- file: src=/opt/admintools/etc/logcheck/ignore.d.server/postfix-extra
-        dest=/etc/logcheck/ignore.d.server/postfix-extra
-        state=link
+- name: symlinking extra ignore configurations for logcheck
+  register: symlink_logcheck_ignore_files
+  shell: 'ln -vs /opt/admintools/etc/logcheck/ignore.d.{{item}}/* /etc/logcheck/ignore.d.{{item}}'
+  failed_when: symlink_logcheck_ignore_files.rc != 0
+  with_items:
+     - server
+     #~ - paranoid
+     #~ - workstation
