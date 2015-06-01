@@ -5,7 +5,7 @@
   ini_file: dest="/etc/mysql/conf.d/mysqldump_events.cnf"
             section=mysqldump
             option=ignore-table
-            value=mysql.events
+            value=mysql.event
             mode=644
   notify: restart mysqld
 
