@@ -1,0 +1,6 @@
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ postfix/smtpd\[[[:digit:]]+\]: warning: hostname [^[:space:]]+ does not resolve to address [[:xdigit:].:]{3,39}: Name or service not known$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ postfix/submission/smtpd\[[[:digit:]]+\]: warning: connect from [^[:space:]]+\[[[:xdigit:].:]{3,39}\]
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ postfix/submission/smtpd\[[[:digit:]]+\]: disconnect from [^[:space:]]+\[[[:xdigit:].:]{3,39}\]
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ postfix/submission/smtpd\[[[:digit:]]+\]: [A-Z0-9]+: client=[^[:space:]]+\[[[:xdigit:].:]{3,39}\], sasl_method=[:alnum:]+, sasl_username=[-_.[:alnum:]]+
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ postfix/anvil\[[[:digit:]]+\]: max connection rate [[:digit:]]+/[[:digit:]]+s for ([[:digit:]]+:[[:xdigit:].:]{3,39}) at ^\w{3} [ :[:digit:]]{11}
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ postfix/anvil\[[[:digit:]]+\]: max connection count [[:digit:]]+ for ([[:digit:]]+:[[:xdigit:].:]{3,39}) at ^\w{3} [ :[:digit:]]{11}

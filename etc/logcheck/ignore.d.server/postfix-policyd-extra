@@ -1,0 +1,1 @@
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ policyd-spf\[[[:digit:]]+\]: (None|Pass); identity=(helo|mailfrom); client-ip=[[:xdigit:].:]{3,39}; helo=[^[:space:]]+; envelope-from=[%[:punct:][:alnum:]]+@[^[:space:]]+; receiver=[%[:punct:][:alnum:]]+@[^[:space:]]+
