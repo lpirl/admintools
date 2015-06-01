@@ -3,4 +3,4 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ imap([-_.[:alnum:]]+): Disconnected: Disconnected in IDLE in=[[:digit:]]+ out=[[:digit:]]+
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ imap([-_.[:alnum:]]+): Disconnected for inactivity in=[[:digit:]]+ out=[[:digit:]]+
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ imap([-_.[:alnum:]]+): Disconnected: Logged out in=[[:digit:]]+ out=[[:digit:]]+
-^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ imap-login: Login: user=<[-_.[:alnum:]]+>, method=[:alnum:]+, rip=[[:xdigit:].:]{3,39}, lip=[[:xdigit:].:]{3,39}, mpid=[[:digit:]]+, TLS, session=<[:alnum:]+>
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ imap-login: Login: user=<[-_.[:alnum:]]+>, method=[[:alnum:]]+, rip=[[:xdigit:].:]{3,39}, lip=[[:xdigit:].:]{3,39}, mpid=[[:digit:]]+, TLS, session=<[:alnum:]+>
