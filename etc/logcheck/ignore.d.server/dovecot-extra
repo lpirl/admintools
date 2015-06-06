@@ -6,3 +6,4 @@
 ^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ dovecot: imap\([-._[:alnum:]]+\): Connection closed in=[[:digit:]]+ out=[[:digit:]]+
 ^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ dovecot: imap-login: Login: user=<[-._[:alnum:]]+>, method=[^[:space:]]+, rip=[[:xdigit:].:]{3,39}, lip=[[:xdigit:].:]{3,39}, mpid=[[:digit:]]+, TLS, session=<[^[:space:]]+>
 ^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ dovecot: imap-login: Login: Disconnected \(client didn't finish SASL auth, waited [[:digit:]]+ secs\): user=<>, method=[^[:space:]]+, rip=[[:xdigit:].:]{3,39}, lip=[[:xdigit:].:]{3,39}, TLS, session=<[^[:space:]]+>
+^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ dovecot: imap-login: Disconnected \(no auth attempts in [[:digit:]]+ secs\): user=<>, rip=[[:xdigit:].:]{3,39}, lip=[[:xdigit:].:]{3,39}, TLS, session=<[^[:space:]]+>
