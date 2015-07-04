@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ dbus\[[[:digit:]]+\]: [system] Reloaded configuration$
+=======
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ dbus\[[[:digit:]]+\]: \[system\] Reloaded configuration
+>>>>>>> 9670516... added logcheck ignore rule: dbus/system: reload configuration
