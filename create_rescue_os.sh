@@ -41,7 +41,7 @@ function var_detect_check { # name
 	echo "${1}=${VALUE}"
 	if [ "${VALUE}" = "" ]
 	then
-	        error "could not detect '${1}'"
+	        error "could not detect '${1}'. ${2}"
 	fi
 }
 
@@ -77,7 +77,7 @@ TARGET_UUID="$1"
 var_detect_check TARGET_UUID
 
 MOUNTPOINT=$( grep -v "^#" /etc/fstab | grep $TARGET_UUID | awk '{print $2}')
-var_detect_check MOUNTPOINT
+var_detect_check MOUNTPOINT "The UUID must be specified in /etc/fstab."
 
 DEVICE=$(blkid | grep $TARGET_UUID | cut -d: -f1 | sed 's/[0-9]*$//g')
 var_detect_check DEVICE
