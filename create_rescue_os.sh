@@ -82,7 +82,7 @@ var_detect_check MOUNTPOINT "The UUID must be specified in /etc/fstab."
 DEVICE=$(blkid | grep $TARGET_UUID | cut -d: -f1 | sed 's/[0-9]*$//g')
 var_detect_check DEVICE
 
-$MOUNT $DEVICE $MOUNTPOINT
+$MOUNT $MOUNTPOINT
 
 #
 # check if target is mounted
