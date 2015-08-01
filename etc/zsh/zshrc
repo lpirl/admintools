@@ -42,12 +42,73 @@ bindkey "^[[B" history-search-forward
 autoload colors; colors
 export PS1="%B[%{$fg[green]%}%n%{$reset_color%}%b@%B%{$fg[red]%}%M%b%{$reset_color%}:%{$fg[yellow]%}%~%{$reset_color%}%B]%b "
 
-# must-have-keys
-bindkey "\e[3~" delete-char
-[[ -z "$terminfo[khome]" ]] || bindkey -M emacs "$terminfo[khome]" beginning-of-line
-[[ -z "$terminfo[kend]" ]] || bindkey -M emacs "$terminfo[kend]" end-of-line
+# ctrl-left/right
+bindkey "\e[1;5C" forward-word
+bindkey "\e[1;5D" backward-word
 
+# ctrl-backspace/delete
+bindkey "\C-_" backward-kill-word
+bindkey "\e[3;5~" kill-word
+
+# alt-backspace
+bindkey "\e\d" undo
+
+bindkey "\e[3~" delete-char
+bindkey '\e[H' beginning-of-line
+bindkey '\e[F' end-of-line
+
+#
+# direcotry history
+#
+
+DIRSTACKFILE="$HOME/.zsh_dirstack"
+if [[ -f $DIRSTACKFILE ]] && [[ $#dirstack -eq 0 ]]; then
+  dirstack=( ${(f)"$(< $DIRSTACKFILE)"} )
+  [[ -d $dirstack[1] ]] && cd $dirstack[1]
+fi
+chpwd() {
+  print -l $PWD ${(u)dirstack} >$DIRSTACKFILE
+}
+
+DIRSTACKSIZE=100
+
+setopt autopushd pushdsilent pushdtohome
+
+# Remove duplicate entries
+setopt pushdignoredups
+
+# This reverts the +/- operators.
+setopt pushdminus
+
+#
+# Alt-Up, Alt-Left directory navigation
+#
+
+cdUndoKey() {
+  popd      > /dev/null
+  zle       reset-prompt
+  echo
+  ls
+  echo
+}
+
+cdParentKey() {
+  pushd .. > /dev/null
+  zle      reset-prompt
+  echo
+  ls
+  echo
+}
+
+zle -N                 cdParentKey
+zle -N                 cdUndoKey
+bindkey '^[[1;3A'      cdParentKey
+bindkey '^[[1;3D'      cdUndoKey
+
+#
 # aliases
+#
+
 alias cp='cp --reflink=auto --sparse=always'
 alias ls='ls --color=auto -F --time-style=+"%Y-%m-%d %H:%M:%S"'
 alias l="ls -hl"
