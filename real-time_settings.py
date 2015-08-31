@@ -10,8 +10,9 @@ import logging
 from sys import argv
 from abc import ABCMeta
 from os import getuid, uname as get_uname, path
-from shutil import which
+from shutil import which, copyfile
 from subprocess import call, check_output
+from multiprocessing import cpu_count
 
 if __name__ != '__main__':
   raise NotImplementedError(
@@ -27,16 +28,18 @@ This is currently tested for recent Debian and Fedora systems.
 )
 
 parser.add_argument('-d', '--debug', action='store_true', default=False,
-                    help='Turn on debug messages?')
+                    help='turn on debug messages')
 parser.add_argument('-v', '--verbose', action='store_true', default=False,
-                    help='Turn on verbose messages?')
-
+                    help='turn on verbose messages')
 parser.add_argument('-s', '--simulate', action='store_true',
                     default=False,
-                    help='Simulate and just print actions?')
+                    help='simulate and print what would be executed')
+parser.add_argument('-l', '--list', action='store_true',
+                    default=False,
+                    help='list available settings modules and exit')
 
-parser.add_argument('on_or_off', choices = ['on', 'off'],
-                    help='Activate or deactivate.')
+parser.add_argument('on_or_off', choices = ['on', 'off'], nargs='?',
+                    help='Activate or rt_settings_off.')
 
 cli_args = parser.parse_args()
 
@@ -55,10 +58,10 @@ actions = []
 
 class ActionBase(metaclass=ABCMeta):
 
-  def activate(self):
+  def rt_settings_on(self):
     pass
 
-  def deactivate(self):
+  def rt_settings_off(self):
     pass
 
   def execute_safely(self, function, *args, **kwargs):
@@ -110,16 +113,13 @@ class ActionBase(metaclass=ABCMeta):
     self.service(name, "stop")
 
 class CheckForRealTimeKernel(ActionBase):
-
-  def activate(self):
-
+  def rt_settings_on(self):
     SYS_RT_FILE = "/sys/kernel/realtime"
     if path.isfile(SYS_RT_FILE):
       with open(SYS_RT_FILE) as sys_rt:
         if sys_rt.readline() == "1":
           logging.debug("found %s with '1' in it" % SYS_RT_FILE)
           return
-
     uname = get_uname()
     if uname.release.endswith("+rt"):
       logging.debug("found +rt in kernel release")
@@ -135,34 +135,63 @@ class CheckForRealTimeKernel(ActionBase):
 actions.append(CheckForRealTimeKernel)
 
 class Cron(ActionBase):
-  def activate(self):
+  def rt_settings_on(self):
     self.service_stop("cron")
     self.service_stop("crond")
-  def deactivate(self):
+  def rt_settings_off(self):
     self.service_start("cron")
     self.service_start("crond")
 actions.append(Cron)
 
 class Tlp(ActionBase):
-  def activate(self):
+  def rt_settings_on(self):
     self.service_stop("tlp")
-  def deactivate(self):
+  def rt_settings_off(self):
     self.service_start("tlp")
 actions.append(Tlp)
+
+class FrequencyScaling(ActionBase):
+  CPUFREQ_BASE_PATH = "/sys/devices/system/cpu/cpu%i/cpufreq"
+  CPUFREQ_MIN = path.join(CPUFREQ_BASE_PATH, "cpuinfo_min_freq")
+  CPUFREQ_MAX = path.join(CPUFREQ_BASE_PATH, "cpuinfo_max_freq")
+  CPUFREQ_MIN_ALLOWED = path.join(CPUFREQ_BASE_PATH, "scaling_min_freq")
+  def rt_settings_on(self):
+    for cpu_num in range(cpu_count()):
+      self.execute_safely(
+        copyfile,
+        self.CPUFREQ_MAX % cpu_num,
+        self.CPUFREQ_MIN_ALLOWED % cpu_num
+      )
+  def rt_settings_off(self):
+    for cpu_num in range(cpu_count()):
+      self.execute_safely(
+        copyfile,
+        self.CPUFREQ_MIN % cpu_num,
+        self.CPUFREQ_MIN_ALLOWED % cpu_num
+      )
+actions.append(FrequencyScaling)
 
 #
 # execution of actions
 #
 
-if getuid():
+if cli_args.list:
+  for action in actions:
+    print(action.__name__)
+  exit(0)
+
+
+if cli_args.on_or_off and getuid():
   logging.warn("You'll probably have to run this as root (sudo) "
                "but I'll continue and try.")
 
 if cli_args.on_or_off == "on":
   for Action in actions:
-    logging.info("activating %s" % Action.__name__)
-    Action().activate()
-else:
+    logging.info("turning real-time settings on: %s" % Action.__name__)
+    Action().rt_settings_on()
+elif cli_args.on_or_off == "off":
   for Action in actions:
-    logging.info("deactivating %s" % Action.__name__)
-    Action().deactivate()
+    logging.info("turning real-time settings off: %s" % Action.__name__)
+    Action().rt_settings_off()
+else:
+  print("please provide either 'on' or 'off' as last argument (see -h)")
