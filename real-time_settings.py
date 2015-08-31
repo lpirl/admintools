@@ -20,11 +20,8 @@ if __name__ != '__main__':
   )
 
 parser = argparse.ArgumentParser(
-  description="""Configures your Linux for real-time applications.
-
-This is currently tested for recent Debian and Fedora systems.
-""",
-  formatter_class=argparse.ArgumentDefaultsHelpFormatter
+  description="Configures your Linux for real-time applications " +
+              "(tested for recent Debian and Fedora systems)."
 )
 
 parser.add_argument('-d', '--debug', action='store_true', default=False,
@@ -37,7 +34,8 @@ parser.add_argument('-s', '--simulate', action='store_true',
 parser.add_argument('-l', '--list', action='store_true',
                     default=False,
                     help='list available settings modules and exit')
-
+parser.add_argument('-i', '--ignore', nargs='*', default=[],
+                    help='list of settings modules to ignore')
 parser.add_argument('on_or_off', choices = ['on', 'off'], nargs='?',
                     help='Activate or rt_settings_off.')
 
@@ -50,10 +48,10 @@ if cli_args.debug:
 if cli_args.verbose:
   logging.getLogger().setLevel(logging.INFO)
 
-actions = []
+settings_modules = []
 
 #
-# action definitions
+# settings module definitions
 #
 
 class ActionBase(metaclass=ABCMeta):
@@ -132,7 +130,7 @@ class CheckForRealTimeKernel(ActionBase):
       return
 
     logging.error("You don't seem to be using a real-time kernel.")
-actions.append(CheckForRealTimeKernel)
+settings_modules.append(CheckForRealTimeKernel)
 
 class Cron(ActionBase):
   def rt_settings_on(self):
@@ -141,14 +139,14 @@ class Cron(ActionBase):
   def rt_settings_off(self):
     self.service_start("cron")
     self.service_start("crond")
-actions.append(Cron)
+settings_modules.append(Cron)
 
 class Tlp(ActionBase):
   def rt_settings_on(self):
     self.service_stop("tlp")
   def rt_settings_off(self):
     self.service_start("tlp")
-actions.append(Tlp)
+settings_modules.append(Tlp)
 
 class FrequencyScaling(ActionBase):
   CPUFREQ_BASE_PATH = "/sys/devices/system/cpu/cpu%i/cpufreq"
@@ -169,29 +167,43 @@ class FrequencyScaling(ActionBase):
         self.CPUFREQ_MIN % cpu_num,
         self.CPUFREQ_MIN_ALLOWED % cpu_num
       )
-actions.append(FrequencyScaling)
+settings_modules.append(FrequencyScaling)
+
 
 #
-# execution of actions
+# execution of settings modules
 #
 
 if cli_args.list:
-  for action in actions:
+  for action in settings_modules:
     print(action.__name__)
   exit(0)
 
+# assort ignored settings module
+unignored_settings_modules = list(settings_modules)
+for settings_module in settings_modules:
+  settings_module_name = settings_module.__name__
+  if settings_module_name in cli_args.ignore:
+    unignored_settings_modules.remove(settings_module)
+    cli_args.ignore.remove(settings_module_name)
+if cli_args.ignore:
+  logging.error(
+    "Could not find settings modules to ignore: %r" % cli_args.ignore
+  )
+  exit(1)
+settings_modules = unignored_settings_modules
 
 if cli_args.on_or_off and getuid():
   logging.warn("You'll probably have to run this as root (sudo) "
                "but I'll continue and try.")
 
 if cli_args.on_or_off == "on":
-  for Action in actions:
-    logging.info("turning real-time settings on: %s" % Action.__name__)
-    Action().rt_settings_on()
+  for SettingsModule in settings_modules:
+    logging.info("real-time settings on: %s" % SettingsModule.__name__)
+    SettingsModule().rt_settings_on()
 elif cli_args.on_or_off == "off":
-  for Action in actions:
-    logging.info("turning real-time settings off: %s" % Action.__name__)
-    Action().rt_settings_off()
+  for SettingsModule in settings_modules:
+    logging.info("real-time settings off: %s" % SettingsModule.__name__)
+    SettingsModule().rt_settings_off()
 else:
   print("please provide either 'on' or 'off' as last argument (see -h)")
