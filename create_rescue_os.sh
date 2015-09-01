@@ -12,6 +12,13 @@
 # of sufficient size (with i.e. fdisk) with preferably the same file
 # system as you use for your root partition.
 #
+# IMPORTANT:
+# Try booting into your rescue OS (obviously). If you experience fsck
+# is stopping your boot process and asking for giving the root password
+# or Ctrl-D because a device is missing, make the corresponding file
+# systems of the fstype "auto" or add "nofail" as a mount option in your
+# original fstab.
+#
 # After initial execution, check if you can boot the backup.
 #
 # usage: ./create_rescue_os.sh <target_UUID>
@@ -34,7 +41,7 @@ function var_detect_check { # name
 	echo "${1}=${VALUE}"
 	if [ "${VALUE}" = "" ]
 	then
-	        error "could not detect '${1}'"
+	        error "could not detect '${1}'. ${2}"
 	fi
 }
 
@@ -70,7 +77,7 @@ TARGET_UUID="$1"
 var_detect_check TARGET_UUID
 
 MOUNTPOINT=$( grep -v "^#" /etc/fstab | grep $TARGET_UUID | awk '{print $2}')
-var_detect_check MOUNTPOINT
+var_detect_check MOUNTPOINT "The UUID must be specified in /etc/fstab."
 
 DEVICE=$(blkid | grep $TARGET_UUID | cut -d: -f1 | sed 's/[0-9]*$//g')
 var_detect_check DEVICE
@@ -118,29 +125,33 @@ $RSYNC \
 		/ /boot "${MOUNTPOINT}"
 
 #
+# set up chroot
+#
+BINDS="dev proc sys tmp"
+CHROOT="chroot ${MOUNTPOINT}"
+
+for BIND in $BINDS
+do
+	$MOUNT --bind /$BIND $MOUNTPOINT/$BIND
+done
+
+#
 # update grub
 #
 if [ $UPDATE_BOOTLOADER = true ]
 then
-	BINDS="dev proc sys tmp"
-	CHROOT="chroot ${MOUNTPOINT}"
-
-	# set up chroot
-	for BIND in $BINDS
-	do
-		$MOUNT --bind /$BIND $MOUNTPOINT/$BIND
-	done
-
 	# actually update grub
 	$CHROOT $UPDATE_GRUB
 	$CHROOT $GRUB_INSTALL $DEVICE
-
-	# tear down chroot
-	for BIND in $BINDS
-	do
-		$UMOUNT -l $MOUNTPOINT/$BIND
-	done
 fi
+
+#
+# tear down chroot
+#
+for BIND in $BINDS
+do
+	$UMOUNT -l $MOUNTPOINT/$BIND
+done
 
 echo "unmounting…"
 
