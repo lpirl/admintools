@@ -20,6 +20,7 @@ function show_help {
 	echo "	-t	retry timeout (default: 60)"
 	echo "	-d	dry run: don't manipulate data (default: no)"
 	echo "	-n	no retry if target host is not available (default: retry)"
+	echo "	-o	extra options to pass to rsync"
 	echo
 	echo "Good luck."
 }
@@ -39,7 +40,7 @@ function errormsg_help_exit {
 function run_safely {
 	if [ $DRY_RUN -eq 1 ]
 	then
-		echo "would run '$*'"
+		echo "would run: $*" 1>&2
 	else
 		sh -c "$*"
 	fi
@@ -82,7 +83,7 @@ NO_RETRY=0										# -n
 PIDFILE_NAME=$(basename $0)_$(whoami).lock
 RSYNC_OPTS=""
 
-while getopts "h?u:p:b:s:cdn" opt; do
+while getopts "h?u:p:b:s:o:cdn" opt; do
 	case "$opt" in
 	h|\?)
 		show_help
@@ -120,6 +121,8 @@ while getopts "h?u:p:b:s:cdn" opt; do
 		fi
 		HISTORY_DIR=$OPTARG
 		RSYNC_OPTS="--backup --backup-dir=$HISTORY_DIR"
+		;;
+	o)	RSYNC_OPTS+=" $OPTARG "
 		;;
 	c)	CLEAN_HISTORY_DIR=1
 		;;
@@ -193,7 +196,8 @@ echo $$ > $PIDFILE
 # wait until the target host is reachable
 #
 function is_online() {
-	echo "ls" | sftp -P $TARGET_PORT  "${TARGET_USER}@${TARGET_HOST}" > /dev/null
+	run_safely "echo 'ls' | \
+		sftp -P $TARGET_PORT  '${TARGET_USER}@${TARGET_HOST}' > /dev/null"
 	echo $?
 }
 
