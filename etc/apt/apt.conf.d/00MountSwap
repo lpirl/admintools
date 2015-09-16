@@ -1,0 +1,7 @@
+# this is required for reconfiguring uswsusp
+DPkg::Pre-Invoke {
+  "cat /etc/fstab | sed -rn 's/([^\s]*)\sswap\s.*noauto.*/\1/p' | xargs -L1 swapon -v";
+};
+DPkg::Post-Invoke {
+  "cat /etc/fstab | sed -rn 's/([^\s]*)\sswap\s.*noauto.*/\1/p' | xargs -L1 swapoff -v";
+};
