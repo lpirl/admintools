@@ -7,7 +7,7 @@
 - name: install logcheck
   apt: package=logcheck
 
-- name: add entries of other NATed hosts to /etc/hosts
+- name: do not use FQDN in subject of logcheck emails
   lineinfile: line="FQDN=0"
               regexp="^\s*FQDN\s*=.*"
               dest="/etc/logcheck/logcheck.conf"
