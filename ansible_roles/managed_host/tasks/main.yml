@@ -11,3 +11,4 @@
 - include: apt-dater.yml
 - include: screen.yml
 - include: logging.yml
+- include: hostname-lookup-order.yml
