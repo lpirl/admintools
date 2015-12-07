@@ -129,7 +129,7 @@ class CheckForRealTimeKernel(ActionBase):
       logging.debug("found PREEMT in kernel version")
       return
 
-    logging.error("You don't seem to be using a real-time kernel.")
+    logging.warn("You don't seem to be using a real-time kernel.")
 settings_modules.append(CheckForRealTimeKernel)
 
 class Cron(ActionBase):
