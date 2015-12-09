@@ -1,0 +1,9 @@
+- name: check if systemd directory for system services exists
+  register: check_systemd_system_services_dir
+  stat: path=/etc/systemd/system
+
+- name: symlinking systemd service to mount users\' .cache directories to tmpfs
+  file: src=/opt/admintools/etc/systemd/system/mount-tmpfs-on-home-cache-dirs.service
+        dest=/etc/systemd/system/mount-tmpfs-on-home-cache-dirs.service
+        state=link
+  when: check_systemd_system_services_dir.stat.exists == true
