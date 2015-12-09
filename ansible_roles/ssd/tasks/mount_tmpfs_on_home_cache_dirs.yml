@@ -5,9 +5,4 @@
 - name: enable service to mount users\' .cache directories to tmpfs
   service:  name=/opt/admintools/etc/systemd/system/mount-tmpfs-on-home-cache-dirs.service
             enabled=yes
-  when: check_systemd_system_services_dir.stat.islnk == false
-
-- name: start service to mount users\' .cache directories to tmpfs
-  service:  name=mount-tmpfs-on-home-cache-dirs
-            state=started
-  when: check_systemd_system_services_dir.stat.islnk == false
+  when: check_systemd_system_services_dir.stat.exists == False
