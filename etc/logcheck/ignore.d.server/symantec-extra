@@ -1,0 +1,3 @@
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ SYMBDSNAP_SDK\[[[:digit:]]+\]: Driver is not loaded\. Loading symbdsnap\.
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ SYMBDSNAP_SDK\[[[:digit:]]+\]: Missing symbdsnap driver\.
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ SYMBDSNAP_SDK\[[[:digit:]]+\]: Failed to open device: \/dev\/symbdsnapctl, errno: 2\.
