@@ -1,0 +1,22 @@
+- name: check out admintools git
+  git: repo=https://github.com/lpirl/admintools.git
+       dest=/opt/admintools
+       force=yes
+
+- name: ensure admintools is owned by root
+  file: path=/opt/admintools owner=root group=root recurse=yes
+
+- name: ensure no write access to admintools for others than root
+  register: chmod_no_write_access_result
+  shell: "chmod -cR o-w /opt/admintools"
+  changed_when: chmod_no_write_access_result.stdout != ""
+
+- name: ensure read and execute access to admintools for others than root
+  register: chmod_no_write_access_result
+  shell: "chmod -cR o+rx --changes /opt/admintools"
+  changed_when: chmod_no_write_access_result.stdout != ""
+
+- name: ensure no suid/sgid bit set in admintools
+  register: chmod_no_sid_access_result
+  shell: "chmod -cR a-s /opt/admintools"
+  changed_when: chmod_no_sid_access_result.stdout != ""

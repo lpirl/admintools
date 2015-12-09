@@ -1,0 +1,14 @@
+- include: git-install.yml
+- include: admintools.yml
+- include: git-config.yml
+- include: editor.yml
+- include: shell.yml
+- include: interactive-monitors.yml
+- include: rootkit-detection.yml
+- include: umask.yml
+- include: ntp.yml
+- include: ssh_hardening.yml
+- include: apt-dater.yml
+- include: screen.yml
+- include: logging.yml
+- include: hostname-lookup-order.yml
