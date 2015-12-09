@@ -1,0 +1,13 @@
+[Unit]
+Description=Mounts users' .cache directories in their homes to tmpfs
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/find /home -maxdepth 2 -type d -name .cache -exec \
+    /bin/mount -t tmpfs -o nosuid,noexec,size=10%% none '{}' \;
+ExecStop=/usr/bin/find /home -maxdepth 2 -type d -name .cache -exec \
+    /bin/umount -l '{}' \;
+
+[Install]
+WantedBy=default.target
