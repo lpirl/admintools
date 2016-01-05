@@ -1,0 +1,1 @@
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:].]+\] perf interrupt took too long \([[:digit:]]+ > [[:digit:]]+\), lowering kernel\.perf_event_max_sample_rate to [[:digit:]]+$
