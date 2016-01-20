@@ -58,7 +58,7 @@ settings_modules = []
 
 class ActionBase(metaclass=ABCMeta):
 
-  TEMPFILE = path.join(gettempdir(), "real-time_settings")
+  TEMPFILE = path.join(gettempdir(), "real-time_settings_stored_state")
 
   def rt_settings_on(self):
     pass
@@ -130,6 +130,18 @@ class ActionBase(metaclass=ABCMeta):
     with open(self.TEMPFILE, "w+") as handle:
       return json_dump(obj, handle)
 
+  def store_and_replace_content_in_file(self, file_path, value):
+    with open(file_path) as handle:
+      content = handle.readline().strip()
+    self.store_to_temp(file_path, content)
+    with open(file_path, "w+") as handle:
+      handle.write(str(value))
+
+  def restore_or_set_default_content_in_file(self, file_path, default):
+    loaded = self.load_from_temp(file_path)
+    with open(file_path, "w+") as handle:
+      handle.write(str(loaded or default))
+
 class CheckForRealTimeKernel(ActionBase):
   def rt_settings_on(self):
     SYS_RT_FILE = "/sys/kernel/realtime"
@@ -173,7 +185,6 @@ class FrequencyScaling(ActionBase):
   CPUFREQ_MIN = path.join(CPUFREQ_BASE_PATH, "cpuinfo_min_freq")
   CPUFREQ_MAX = path.join(CPUFREQ_BASE_PATH, "cpuinfo_max_freq")
   CPUFREQ_MIN_ALLOWED = path.join(CPUFREQ_BASE_PATH, "scaling_min_freq")
-  HAS_PSTATES = path.exists("/sys/devices/system/cpu/intel_pstate")
   def rt_settings_on(self):
     for cpu_num in range(cpu_count()):
       self.execute_safely(
@@ -190,31 +201,32 @@ class FrequencyScaling(ActionBase):
       )
 settings_modules.append(FrequencyScaling)
 
+class CpuGovernor(ActionBase):
+  GOVERNOR_FILE_PATH_TEMPLATE = "/sys/devices/system/cpu/cpu%i/cpufreq/scaling_governor"
+  GOVERNOR_ON = "performance"
+  GOVERNOR_OFF_DEFAULT = "powersave"
+  def rt_settings_on(self):
+    for cpu_num in range(cpu_count()):
+      self.execute_safely(self.store_and_replace_content_in_file,
+                          self.GOVERNOR_FILE_PATH_TEMPLATE % cpu_num,
+                          self.GOVERNOR_ON)
+  def rt_settings_off(self):
+    for cpu_num in range(cpu_count()):
+      self.execute_safely(self.store_and_replace_content_in_file,
+                          self.GOVERNOR_FILE_PATH_TEMPLATE % cpu_num,
+                          self.GOVERNOR_OFF_DEFAULT)
+settings_modules.append(CpuGovernor)
+
 class IntelPState(ActionBase):
   PSTATE_NO_TURBO_FILE_NAME = "/sys/devices/system/cpu/intel_pstate/no_turbo"
   PSTATE_NO_TURBO_ON = 0
   PSTATE_NO_TURBO_OFF_DEFAULT = 1
-
-  def _store_current_and_replace(self, file_name, value):
-    file_path = path.join(self.PSTATE_BASE_PATH, file_name)
-    with open(file_path) as handle:
-      content = handle.readline().strip()
-    self.store_to_temp(file_path, content)
-    with open(file_path, "w+") as handle:
-      handle.write(str(value))
-
-  def _restore_or_set(self, file_name, default):
-    file_path = path.join(self.PSTATE_BASE_PATH, file_name)
-    loaded = self.load_from_temp(file_name)
-    with open(file_path, "w+") as handle:
-      handle.write(str(loaded or default))
-
   def rt_settings_on(self):
-    self.execute_safely(self._store_current_and_replace,
+    self.execute_safely(self.store_and_replace_content_in_file,
                         self.PSTATE_NO_TURBO_FILE_NAME,
                         self.PSTATE_NO_TURBO_ON)
   def rt_settings_off(self):
-    self.execute_safely(self._restore_or_set,
+    self.execute_safely(self.restore_or_set_default_content_in_file,
                         self.PSTATE_NO_TURBO_FILE_NAME,
                         self.PSTATE_NO_TURBO_OFF_DEFAULT)
 settings_modules.append(IntelPState)
