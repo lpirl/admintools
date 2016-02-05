@@ -1,5 +1,10 @@
-#- name: sometimes you just need to start it over
-#  shell: rm /etc/ssh/ssh_host_*key*
+- name: add comment about ssh hardening tutorial
+  lineinfile: line="# SSH hardening (2015) https://stribika.github.io/2015/01/04/secure-secure-shell.html"
+              dest="/etc/ssh/sshd_config"
+              insertbefore=BOF
+
+
+# ---------- BEGIN: check password auth ----------
 
 - name: check if password authentication for root disabled (JUST FAILS IF NOT)
   when: not sshd_allow_password_auth
@@ -33,14 +38,11 @@
   failed_when: "result.rc != 1"
   ignore_errors: yes
 
-# ---------- BEGIN: version specific: algorithms etc. ----------
+# ----------   END: check password auth ----------
 
-- name: add comment about ssh hardening tutorial
-  lineinfile: line="# SSH hardening (2015) https://stribika.github.io/2015/01/04/secure-secure-shell.html"
-              dest="/etc/ssh/sshd_config"
-              insertbefore=BOF
 
-#     BEGIN version checks
+# ---------- BEGIN: version checks ----------
+
 - name: check ssh version to be 6.7 or later
   register: ssh_ge6p7
   shell: 'T="OpenSSH_6.7"; [ "`echo "$T\n$(ssh -V 2>&1 | cut -d, -f1)" | sort | head -n1`" = "$T" ]'
@@ -59,8 +61,10 @@
   changed_when: false
   failed_when: false
 
-#     END   version checks
+# ----------   END: version checks ----------
 
+
+# ---------- BEGIN: version specific configuration ----------
 
 - name: restricting supported key exchange protocols for server (>=6.6)
   lineinfile: line="KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256{{sshd_extra_kex}}"
@@ -88,7 +92,7 @@
 
 - name: disabling DSA host key
   register: disable_dsa_host_key_result
-  shell: "find /etc/ssh -iname '*_dsa_*' -not -name '*INSECURE' -exec rename -v 's/(.*)/$1.INSECURE/' {} \\;"
+  shell: "find /etc/ssh -iname '*_dsa_*' -not -name '*INSECURE*' -exec rename -v 's/(.*)/$1.INSECURE_{{ ansible_date_time.iso8601 }}/' {} \\;"
   changed_when: disable_dsa_host_key_result.stdout != ""
   notify: restart sshd
 
@@ -146,14 +150,14 @@
 
 - name: disable insecure RSA host key (too short)
   register: disable_rsa_host_key_result
-  shell: "find /etc/ssh -iname '*_rsa_*' -not -name '*INSECURE' -exec rename -v 's/(.*)/$1.INSECURE/' {} \\;"
+  shell: "find /etc/ssh -iname '*_rsa_*' -not -name '*INSECURE*' -exec rename -v 's/(.*)/$1.INSECURE_{{ ansible_date_time.iso8601 }}/' {} \\;"
   changed_when: disable_rsa_host_key_result.stdout != ""
-  when: check_rsa_host_key_length.rc == 1
+  when: check_rsa_host_key_length.rc == 0
   notify: restart sshd
 
 - name: re-create RSA host key
-  shell: ssh-keygen -t rsa -b 8192 -f /etc/ssh/ssh_host_rsa_key -N "" 
-  when: check_rsa_host_key_length.rc == 1
+  shell: ssh-keygen -t rsa -b 8192 -f /etc/ssh/ssh_host_rsa_key -N ""
+  when: check_rsa_host_key_length.rc == 0
   notify: restart sshd
 
 
@@ -192,4 +196,4 @@
   when: ssh_lt6p0.rc == 0
   notify: restart sshd
 
-# ---------- END:   version specific: algorithms etc. ----------
+# ---------- END:   version specific configuration ----------
