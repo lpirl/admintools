@@ -1,5 +1,6 @@
 - include: git-install.yml
 - include: admintools.yml
+- include: apt-config.yml
 - include: git-config.yml
 - include: editor.yml
 - include: shell.yml
