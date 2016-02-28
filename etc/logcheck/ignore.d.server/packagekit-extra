@@ -1,0 +1,3 @@
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ PackageKit: get-updates transaction \/[_[:alnum:]]+ from uid [0-9]+ finished with (success|failed) after [0-9]+ms
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ PackageKit: new update-packages transaction \/[_[:alnum:]]+ scheduled from uid [0-9]+
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ PackageKit: update-packages transaction \/[_[:alnum:]]+ from uid [0-9]+ finished with (success|failed) after [0-9]+ms
