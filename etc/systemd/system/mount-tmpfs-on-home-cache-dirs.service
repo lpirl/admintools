@@ -5,7 +5,7 @@ Description=Mounts users' .cache directories in their homes to tmpfs
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/bin/find /home -maxdepth 2 -type d -name .cache -exec \
-    /bin/mount -t tmpfs -o nosuid,noexec,size=10%% none '{}' \;
+    /bin/mount -t tmpfs -o nosuid,noexec,size=10%%% tmpfs '{}' \;
 ExecStop=/usr/bin/find /home -maxdepth 2 -type d -name .cache -exec \
     /bin/umount -l '{}' \;
 
