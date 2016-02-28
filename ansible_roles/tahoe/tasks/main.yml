@@ -1,8 +1,8 @@
 - name: install Tahoe LAFS
-  pip: name=allmydata-tahoe  extra_args='--user'
+  pip: name=allmydata-tahoe  extra_args='--user' state=latest
 
 - name: install service_identity for Twisted
-  pip: name=service_identity  extra_args='--user'
+  pip: name=service_identity  extra_args='--user' state=latest
 
 - name: add Tahoe binaries to $PATH for zsh
   lineinfile: dest=~/.zshenv
