@@ -14,3 +14,9 @@
   cron: name="start tahoe node at boot"
         special_time=reboot
         job="{{ tahoe_bin }} start '{{ tahoe_basedir }}/node/'"
+
+- name: start node daily (in case it crashed)
+  cron: name="start node daily (in case it crashed)"
+        hour="{{ 24 |random }}"
+        minute="{{ 60 |random }}"
+        job="{{ tahoe_bin }} start '{{ tahoe_basedir }}/node/' > /dev/null 2>&1"
