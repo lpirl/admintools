@@ -4,8 +4,5 @@
 - name: install unhide (for rkhunter)
   apt: package=unhide
 
-- name: uninstall unhide.rb (for rkhunter)
-  apt: package=unhide.rb state=absent
-
 - name: install chkrootkit
   apt: package=chkrootkit

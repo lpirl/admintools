@@ -1,4 +1,4 @@
-- name: install process viewer htop
+- name: install process manager htop
   apt: package=htop
 
 - name: ensure htop's configuration directory exists for current user (if not root)
@@ -15,5 +15,11 @@
   file: src=/opt/admintools/htoprc dest=/root/.config/htop/htoprc
         force=no state=link
 
-- name: install network traffic viewer iftop
+- name: install iftop
   apt: package=iftop
+
+- name: install nmon
+  apt: package=nmon
+
+- name: install lshw
+  apt: package=lshw
