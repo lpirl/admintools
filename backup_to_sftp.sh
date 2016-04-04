@@ -13,7 +13,7 @@ function show_help {
 	echo
 	echo "Options:"
 	echo "	-p	port at target host (default: 22)"
-	echo "	-u	user at target host (default: current user)"
+	echo "	-u	user at target host (default: hostname)"
 	echo "	-b	backup directory (for rsync's --backup, default: none)"
 	echo "	-c	clear the backup directory prior copy (USE WITH CARE, default: no)"
 	echo "	-s	source directory (default: '/')"
@@ -72,14 +72,14 @@ set -o pipefail
 OPTIND=1
 
 # defaults:
-SOURCE="/"										# -s
-TARGET_USER=$(whoami)							# -u
+SOURCE="/"											# -s
+TARGET_USER=$(hostname)					# -u
 TARGET_PORT=22									# -p
 HISTORY_DIR=""									# -b
-CLEAN_HISTORY_DIR=0								# -c
+CLEAN_HISTORY_DIR=0							# -c
 RETRY_TIMEOUT=60								# -t
-DRY_RUN=0										# -d
-NO_RETRY=0										# -n
+DRY_RUN=0												# -d
+NO_RETRY=0											# -n
 PIDFILE_NAME=$(basename $0)_$(whoami).lock
 RSYNC_OPTS=""
 
