@@ -37,9 +37,12 @@
   command: cp /root/.ssh/authorized_keys {{ apt_dater_home.stdout}}/.ssh/authorized_keys
   when: check_root_login.rc == 0
 
+- stat: path={{ ansible_env.HOME }}/.ssh/authorized_keys
+  register: authorized_keys_file
+
 - name: copy authorized key from the user to apt-dater
-  command: cp /home/{{ ansible_env.SUDO_USER }}/.ssh/authorized_keys {{ apt_dater_home.stdout}}/.ssh/authorized_keys
-  when: check_root_login.rc != 0
+  command: cp {{ ansible_env.HOME }}/.ssh/authorized_keys {{ apt_dater_home.stdout}}/.ssh/authorized_keys
+  when: check_root_login.rc != 0 and authorized_keys_file.stat.exists == True
 
 - name: set rights on apt-dater's authorized keys file
   file: path={{ apt_dater_home.stdout}}/.ssh/authorized_keys
