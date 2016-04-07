@@ -2,7 +2,7 @@
 
 #######################################################################
 #
-# functions
+# help
 #
 
 function show_help {
@@ -21,9 +21,11 @@ function show_help {
 	echo "	-d	dry run: don't manipulate data (default: no)"
 	echo "	-n	no retry if target host is not available (default: retry)"
 	echo "	-o	extra options to pass to rsync"
+	echo "	-v	be verbose (default: print errors only)"
 	echo
 	echo "Good luck."
 }
+
 
 ######################################################################
 #
@@ -47,16 +49,10 @@ function run_safely {
 }
 
 
-
 #######################################################################
 #
-# bash & process setup
+# bash setup
 #
-
-# make us low priority
-renice 10 $$
-# even for IO:
-ionice -c3 -p$$
 
 # exit on any error:
 set -e
@@ -79,11 +75,13 @@ HISTORY_DIR=""									# -b
 CLEAN_HISTORY_DIR=0							# -c
 RETRY_TIMEOUT=60								# -t
 DRY_RUN=0												# -d
+VERBOSE=0												# -v
+STDOUT=/dev/null
 NO_RETRY=0											# -n
 PIDFILE_NAME=$(basename $0)_$(whoami).lock
 RSYNC_OPTS=""
 
-while getopts "h?u:p:b:s:o:cdn" opt; do
+while getopts "h?u:p:b:s:o:cdnv" opt; do
 	case "$opt" in
 	h|\?)
 		show_help
@@ -138,6 +136,9 @@ while getopts "h?u:p:b:s:o:cdn" opt; do
 		fi
 		RETRY_TIMEOUT=$OPTARG
 		;;
+	v)	VERBOSE=1
+		STDOUT=/dev/tty
+		;;
 	esac
 done
 
@@ -163,9 +164,20 @@ TARGET_DIR="$2"
 
 #######################################################################
 #
+# priorities
+#
+
+# make us low priority
+renice 10 $$ &> $STDOUT
+# even for IO:
+ionice -c3 -p$$ &> $STDOUT
+
+
+#######################################################################
+#
 # check dependencies
 #
-type rsync > /dev/null || exit 1
+type rsync > $STDOUT || exit 1
 
 #######################################################################
 #
@@ -196,8 +208,9 @@ echo $$ > $PIDFILE
 # wait until the target host is reachable
 #
 function is_online() {
+	OPTS=`[ $VERBOSE -eq 1 ] && echo "" || echo "-q"`
 	run_safely "echo 'ls' | \
-		sftp -P $TARGET_PORT  '${TARGET_USER}@${TARGET_HOST}' > /dev/null"
+		sftp $OPTS -P $TARGET_PORT  '${TARGET_USER}@${TARGET_HOST}' > /dev/null"
 	echo $?
 }
 
@@ -210,9 +223,18 @@ done
 
 #######################################################################
 #
-# assemble default rsync command
+# assemble rsync command
 #
-RSYNC="run_safely rsync --rsh='ssh -p $TARGET_PORT' --verbose --verbose"
+
+if [ $VERBOSE -eq 1 ]
+then
+	RSYNC_OPTS+=' --verbose --verbose --progress'
+	SSH_OPTS=""
+else
+	RSYNC_OPTS+=' --quiet'
+	SSH_OPTS="-q"
+fi
+RSYNC="run_safely rsync --rsh='ssh $SSH_OPTS -p $TARGET_PORT'"
 
 
 #######################################################################
@@ -238,11 +260,11 @@ then
 	rmdir "${EMPTY_DIR}/"
 fi
 
+
 #######################################################################
 #
 # copy
 #
-RSYNC_OPTS+=' --progress'
 RSYNC_OPTS+=' --human-readable'
 RSYNC_OPTS+=' --one-file-system'
 RSYNC_OPTS+=' --archive'
