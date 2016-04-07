@@ -2,10 +2,16 @@
   user: name={{tahoe_user}}
 
 - name: install PIP
-  apt: package=python-pip
+  package: name=python-pip
 
-- name: install Python headers
-  apt: package=python-dev
+- name: install build essentials
+  package: name=build-essential
+
+- name: install SSL headers
+  package: name=libssl-dev
 
 - name: install FFI headers
-  apt: package=libffi-dev
+  package: name=libffi-dev
+
+- name: install Python headers
+  package: name=python-dev
