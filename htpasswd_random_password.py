@@ -18,6 +18,16 @@ if __name__ != '__main__':
     "Sorry, there is nosite to include - this is a CLI tool."
   )
 
+def input_yes_xor_no(question):
+  while True:
+    answer = input("%s (y/n) " % question)
+    if answer == "y":
+      return True
+    elif answer == "n":
+      return False
+    else:
+      continue
+
 parser = argparse.ArgumentParser(
   description="%s (%s)" % (__doc__, DISCLAIMER),
   formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -42,6 +52,10 @@ parser.add_argument('wordlists', nargs='+', metavar="wordlist",
                          ' to choose from - ' +
                          'first list is for the first word of the password, ' +
                          'second for the second word, etc.')
+parser.add_argument('-c', '--choose', action='store_true', default=False,
+                    help='choose the password')
+parser.add_argument('-y', '--yes', action='store_true', default=False,
+                    help='assume yes to all questions')
 
 # display help per default
 cli_args = parser.parse_args()
@@ -52,25 +66,23 @@ if cli_args.debug:
   logging.getLogger().setLevel(logging.DEBUG)
 
 # get random words and join them to a password
-words = []
-logging.debug("word lists: %r", cli_args.wordlists)
-for wordlist_file_name in cli_args.wordlists:
-  while True:
-    lines = open(wordlist_file_name).readlines()
-    line = choice(lines)
-    word = line.strip()
-    if word and not word.startswith("#"):
-      words.append(word)
-      break
-password = " ".join(words)
+while True:
+  words = []
+  logging.debug("word lists: %r", cli_args.wordlists)
+  for wordlist_file_name in cli_args.wordlists:
+    while True:
+      lines = open(wordlist_file_name).readlines()
+      line = choice(lines)
+      word = line.strip()
+      if word and not word.startswith("#"):
+        words.append(word)
+        break
+  password = " ".join(words)
+  if not cli_args.choose or cli_args.yes:
+    break
+  elif input_yes_xor_no("Is the password '%s' okay?" % password):
+    break
 
-# set the password in the htpasswd file:
-htpasswd_args = ["/usr/bin/env", "htpasswd", "-b", cli_args.htpasswd_file,
-                 cli_args.username, password]
-logging.debug("calling %r", htpasswd_args)
-check_call(htpasswd_args)
-
-# send email to the user:
 body_lines = [
   "place: %s" % cli_args.place,
   "user: '%s'" % cli_args.username,
@@ -83,6 +95,22 @@ msg["From"] = cli_args.sender
 msg["To"] = cli_args.recipient
 msg["Subject"] = "your credentials for %s" % cli_args.place
 msg_string = msg.as_string()
+
+if not cli_args.yes:
+  print()
+  for line in msg_string.splitlines():
+    print("  %s" % line)
+  print()
+  if not input_yes_xor_no("Is the above correct?"):
+    exit(1)
+
+# set the password in the htpasswd file:
+htpasswd_args = ["/usr/bin/env", "htpasswd", "-b", cli_args.htpasswd_file,
+                 cli_args.username, password]
+logging.debug("calling %r", htpasswd_args)
+check_call(htpasswd_args)
+
+# send email to the user:
 logging.debug("message is:")
 logging.debug(msg_string)
 process = Popen(["/usr/bin/env", "sendmail", "-t", "-oi"], stdin=PIPE)
