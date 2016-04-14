@@ -27,7 +27,7 @@ parser.add_argument('-d', '--debug', action='store_true', default=False,
                     help='turn on debug messages')
 parser.add_argument('encfs_conf', help='ENCFS XML configuration file',
                     nargs="?")
-parser.add_argument('-p', '--encfs_password_file',
+parser.add_argument('encfs_password_file', nargs="?",
                     help='a file containing the ENCFS password ' +
                          '(only the first line will be read)')
 parser.add_argument('paths_file', nargs="?",
@@ -52,7 +52,8 @@ if args.debug:
 if args.umount:
 
   if args.encfs_conf or args.encfs_password_file or args.paths_file:
-    parser.error("-u/--umount needs to be the only argument (except debug)")
+    parser.error("-u/--umount needs to be the only argument "+
+                 " (except -d/--debug)")
 
   def umount_and_rmdir(path):
     logging.debug("unmounting and deleting '%s'", path)
@@ -62,23 +63,23 @@ if args.umount:
   encfs_umount_path = args.umount.rstrip(sep)
   umount_and_rmdir(encfs_umount_path)
 
-  basepath = dirname(encfs_umount_path)
+  basedir = dirname(encfs_umount_path)
 
-  plain_umount_basedir = path_join(basepath, 'plain')
+  plain_umount_basedir = path_join(basedir, 'plain')
   for basedirname, subdirnames, _ in os.walk(plain_umount_basedir):
     for subdirname in subdirnames:
       umount_and_rmdir(path_join(basedirname, subdirname))
 
-  for path in (plain_umount_basedir, basepath):
+  for path in (plain_umount_basedir, basedir):
     logging.debug("removing '%s'", path)
     os.rmdir(path)
 
   exit(0)
 
 else:
-  if not (args.encfs_conf and args.paths_file):
-    parser.error("when not unmounting, <encfs_conf> and <paths_file> " +
-                 "are required")
+  if not (args.encfs_conf and args.paths_file and args.encfs_password_file):
+    parser.error("when not unmounting, <encfs_conf>, <paths_file> " +
+                 "and <encfs_password_file> is required")
 
 #
 # read paths to mount
@@ -100,7 +101,7 @@ with open(args.paths_file) as paths_file:
     if dir_basename in to_mount:
       raise RuntimeError("Sorry, multiple directories with the same name" +
                          ("(%s) are not supported at " % dir_basename) +
-                         "at the moment")
+                         "the moment")
     to_mount[dir_basename] = line
 logging.debug("Planned mounts are %s", to_mount)
 
@@ -130,25 +131,17 @@ for dir_basename, from_path in to_mount.items():
 encfs_basepath = path_join(basepath, "encfs")
 os.mkdir(encfs_basepath)
 
-encfs_args = ["encfs", "--reverse",]
-encfs_stdin = DEVNULL
-
-password = None
-if args.encfs_password_file:
-  encfs_stdin = PIPE
-  with open(args.encfs_password_file) as encfs_password_file:
-    password = encfs_password_file.readline().strip()
-  encfs_args.append("--stdinpass")
-
-encfs_args.extend((plain_basepath, encfs_basepath))
+encfs_args = ["encfs", "--reverse", "--stdinpass", plain_basepath,
+              encfs_basepath]
 
 logging.debug("setting ENCFS6_CONFIG to %s", args.encfs_conf)
 os.environ['ENCFS6_CONFIG'] = args.encfs_conf
 
 logging.debug("invoking `%s`" % " ".join(encfs_args))
-enfs_process = Popen(encfs_args, stdin=encfs_stdin)
+enfs_process = Popen(encfs_args, stdin=PIPE)
 
-if args.encfs_password_file:
+with open(args.encfs_password_file) as encfs_password_file:
+  password = encfs_password_file.readline().strip()
   logging.debug("piping password into encfs")
   enfs_process.communicate(password.encode("utf-8"))
 
