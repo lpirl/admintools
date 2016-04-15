@@ -209,7 +209,7 @@ echo $$ > $PIDFILE
 #
 function is_online() {
 	OPTS=`[ $VERBOSE -eq 1 ] && echo "" || echo "-q"`
-	ssh $OPTS -P $TARGET_PORT  '${TARGET_USER}@${TARGET_HOST}' rsync --version
+	ssh $OPTS -p $TARGET_PORT  "${TARGET_USER}@${TARGET_HOST}" rsync --version > $STDOUT
 	echo $?
 }
 
