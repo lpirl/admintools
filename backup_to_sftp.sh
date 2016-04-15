@@ -209,8 +209,7 @@ echo $$ > $PIDFILE
 #
 function is_online() {
 	OPTS=`[ $VERBOSE -eq 1 ] && echo "" || echo "-q"`
-	run_safely "echo 'ls' | \
-		sftp $OPTS -P $TARGET_PORT  '${TARGET_USER}@${TARGET_HOST}' > /dev/null"
+	ssh $OPTS -P $TARGET_PORT  '${TARGET_USER}@${TARGET_HOST}' rsync --version"
 	echo $?
 }
 
