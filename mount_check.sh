@@ -6,7 +6,7 @@
 if [ $# -eq 0 ]; then
   echo "Test if all mounts are present, all from different devices."
   echo "Syntax: $0 [mount point 1] [mount point 2] …"
-  echo "For example: $0 / /path/to/2nd/mountpoint"
+  echo "For example: $0 / /path/to/mountpoint"
   echo "would test if /path/to/mountpoint is mounted"
   exit 1
 fi
