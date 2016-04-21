@@ -78,7 +78,7 @@ DRY_RUN=0												# -d
 VERBOSE=0												# -v
 STDOUT=/dev/null
 NO_RETRY=0											# -n
-PIDFILE_NAME=$(basename $0)_$(whoami).lock
+PIDFILE_NAME=$(basename $0)_$(whoami)_$(echo "$@" | cksum | cut -d" " -f1).lock
 RSYNC_OPTS=""
 
 while getopts "h?u:p:b:s:o:cdnv" opt; do
