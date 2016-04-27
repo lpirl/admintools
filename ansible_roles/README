@@ -1,8 +1,0 @@
-Please make sure you read and understand every playbook before applying
-it. Otherwise, you'll possibly loose something you love.
-
-Ah, did anyone already tell you to always have recent backups?
-
-* default target systems
-    * apt-based
-    * Debian(-based)

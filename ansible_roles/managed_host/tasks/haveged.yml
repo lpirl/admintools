@@ -1,2 +1,0 @@
-- name: install entropy daemon haveged
-  apt: package=haveged

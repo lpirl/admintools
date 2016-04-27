@@ -1,3 +1,0 @@
----
-dependencies:
-  - { role: tahoe_managed_host }

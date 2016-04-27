@@ -1,5 +1,0 @@
-- name: install GNU screen
-  apt: package=screen
-
-- name: install "at" command
-  apt: package=at

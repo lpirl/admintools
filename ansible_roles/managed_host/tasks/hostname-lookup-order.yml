@@ -1,5 +1,0 @@
-- name: ensure lookup in /etc/hosts before dns
-  lineinfile: line="order hosts,bind"
-              regexp="^\s*order\s.*"
-              dest="/etc/host.conf"
-              insertbefore="^\s*multi\s.*"
