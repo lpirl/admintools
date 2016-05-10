@@ -215,7 +215,7 @@ function is_online() {
 
 while [ $NO_RETRY -eq 0 ] && [ $(is_online) -ne 0 ]
 do
-	echo "sleeping ${RETRY_TIMEOUT}…"
+	echo "sleeping ${RETRY_TIMEOUT}…" > $STDOUT
 	sleep ${RETRY_TIMEOUT}
 done
 
