@@ -1,1 +1,3 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ apache2\[[[:digit:]]+\]: Reloading web server: apache2.
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: Reload(ing|ed) LSB: Apache2 web server.$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ apache2\[[[:digit:]]+\]: Reloading (Apache httpd )?web server: apache2.$
