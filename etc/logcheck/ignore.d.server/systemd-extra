@@ -12,4 +12,4 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: Started Cleanup of Temporary Directories\.
 
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: Start(ing|ed) Daily apt activities\.+
-^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: apt-daily\.timer: Adding ([[:digit:]]+h )?([[:digit:]]+min )?[[:digit:]]+\.[[:digit:]]+s random time\.
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: apt-daily\.timer: Adding ([[:digit:]]+h )?([[:digit:]]+min )?[[:digit:]]+\.[[:digit:]]+m?s random time\.
