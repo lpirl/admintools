@@ -169,10 +169,10 @@ TARGET_DIR="$2"
 
 # make us low priority
 # (ignore this command when binary not available)
-(type renice && renice 10 $$) &> $STDOUT
+(type renice && renice 10 $$ || true) &> $STDOUT
 # even for IO:
 # (ignore this command when binary not available)
-(type ionice && ionice -c3 -p$$) &> $STDOUT
+(type ionice && ionice -c3 -p$$ || true) &> $STDOUT
 
 
 #######################################################################
