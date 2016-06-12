@@ -1,0 +1,4 @@
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ ntpd\[[[:digit:]]+\]: peer [[:xdigit:].:]{3,39} now (in)?valid$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ ntpd\[[[:digit:]]+\]: adjusting local clock by 0\.[[:digit:]]+s$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ ntpd\[[[:digit:]]+\]: adjusting clock frequency by 0\.[[:digit:]]+ to -?[[:digit:]]+\.[[:digit:]]+ppm$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ ntpd\[[[:digit:]]+\]: clock is now synced$
