@@ -168,9 +168,11 @@ TARGET_DIR="$2"
 #
 
 # make us low priority
-renice 10 $$ &> $STDOUT
+# (ignore this command when binary not available)
+(type renice && renice 10 $$ || true) &> $STDOUT
 # even for IO:
-ionice -c3 -p$$ &> $STDOUT
+# (ignore this command when binary not available)
+(type ionice && ionice -c3 -p$$ || true) &> $STDOUT
 
 
 #######################################################################
@@ -267,7 +269,6 @@ fi
 RSYNC_OPTS+=' --human-readable'
 RSYNC_OPTS+=' --one-file-system'
 RSYNC_OPTS+=' --archive'
-RSYNC_OPTS+=' --fake-super'
 RSYNC_OPTS+=' --delete-during'
 RSYNC_OPTS+=' --delete-excluded'
 RSYNC_OPTS+=' --exclude=/tmp'
@@ -280,6 +281,7 @@ if [ "$(uname -o)" != "Cygwin" ]
 then
 	RSYNC_OPTS+=" --xattrs"
 	RSYNC_OPTS+=" --acls"
+	RSYNC_OPTS+=' --fake-super'
 fi
 
 $RSYNC \
