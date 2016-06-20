@@ -141,7 +141,7 @@ done
 if [ $UPDATE_BOOTLOADER = true ]
 then
 	# actually update grub
-	$CHROOT $UPDATE_GRUB
+	$CHROOT $UPDATE_GRUB 2>&1
 	$CHROOT $GRUB_INSTALL $DEVICE
 fi
 
