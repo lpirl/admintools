@@ -10,4 +10,9 @@ type ipmitool > /dev/null || (echo "please install ipmitool"; exit 1)
 
 OUTPUT=`ipmitool sdr type "Power Supply"`
 
-(echo $OUTPUT | egrep -i "fail|lost|error" > /dev/null) && echo "$OUTPUT"
+if (echo $OUTPUT | egrep -i "fail|lost|error" > /dev/null)
+then
+	echo "$OUTPUT"
+else
+	exit 0
+fi
