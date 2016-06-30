@@ -1,0 +1,10 @@
+************************************************************************
+* This system is for the use of authorized users only.                 *
+* Press <Ctrl-D> if you are not an authorized user.                    *
+*                                                                      *
+* Usage of this system is monitored (recorded and analyzed) by system  *
+* personnel. Anyone using this system expressly consents to such       *
+* monitoring and is advised that if such monitoring reveals possible   *
+* evidence of criminal activity, system personnel may provide those    *
+* evidence to law enforcement agencies.                                *
+************************************************************************
