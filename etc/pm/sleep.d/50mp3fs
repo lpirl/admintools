@@ -8,22 +8,22 @@ function all_mount_points {
 
 case $1 in
     hibernate)
-    	# s2disk
+        # s2disk
     ;;
     suspend)
-    	# s2ram
-    	mount | grep mp3fs | awk '{print $3}' > $tmp_file
-    	all_mount_points umount
+        # s2ram
+        mount | grep mp3fs | awk '{print $3}' > $tmp_file
+        all_mount_points umount
     ;;
     thaw)
-    	# resume from s2disk
+        # resume from s2disk
     ;;
     resume)
-    	# resume from s2ram
-    	all_mount_points mount
-    	rm $tmp_file
+        # resume from s2ram
+        all_mount_points mount
+        rm $tmp_file
     ;;
     *)
-    	# unknown argument
+        # unknown argument
     ;;
 esac
