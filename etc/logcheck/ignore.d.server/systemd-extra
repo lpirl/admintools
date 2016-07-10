@@ -15,3 +15,5 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: apt-daily\.timer: Adding ([[:digit:]]+h )?([[:digit:]]+min )?[[:digit:]]+\.[[:digit:]]+m?s random time\.
 
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd-logind\[[[:digit:]]+\]: New session [[:digit:]]+ of user [[:alnum:]_]+\.$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: Starting Session [[:digit:]]+ of user [[:alnum:]_]+\.$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: Reloading\.$
