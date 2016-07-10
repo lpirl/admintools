@@ -1,3 +1,1 @@
-# cache can grow quite big because of many reasons (see
-#   https://sourceforge.net/p/dav/discussion/82589/thread/a5518230/#15ff/88c1 )
 ^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ mount.davfs: open files exceed max cache size by [[:digit:]]+ MiBytes
