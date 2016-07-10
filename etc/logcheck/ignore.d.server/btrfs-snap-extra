@@ -1,0 +1,2 @@
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ btrfs-snap: Create a readonly snapshot of '.*' in '.*'$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ btrfs-snap: Delete subvolume \(no-commit\): '.*'$
