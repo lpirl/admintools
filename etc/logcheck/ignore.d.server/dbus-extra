@@ -1,1 +1,3 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ dbus\[[[:digit:]]+\]: \[system\] Reloaded configuration
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ dbus\[[[:digit:]]+\]: \[system\] Activating via systemd: service name='[[:alnum:]-_.]+' unit='[[:alnum:]-_.]+'$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ dbus\[[[:digit:]]+\]: \[system\] Successfully activated service '[[:alnum:]-_.]+'$
