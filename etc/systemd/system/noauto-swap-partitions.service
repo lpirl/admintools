@@ -1,0 +1,7 @@
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c \
+  'egrep "^[^#].*\sswap\s.*noauto" /etc/fstab | awk \'{print $1}\' | xargs -tL1 swapon'
+ExecStop=/bin/sh -c \
+  'egrep "^[^#].*\sswap\s.*noauto" /etc/fstab | awk \'{print $1}\' | xargs -tL1 swapoff'
