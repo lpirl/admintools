@@ -1,3 +1,12 @@
+# see also / requires:
+#   etc/systemd/system/systemd-logind.service.d/50-can-hibernate.conf
+
+[Unit]
+Description=enable swap partitions marked "noauto" in fstab
+DefaultDependencies=no
+Before=systemd-hibernate.service systemd-hybrid-sleep.service
+StopWhenUnneeded=yes
+
 [Service]
 Type=oneshot
 RemainAfterExit=yes
@@ -5,3 +14,7 @@ ExecStart=/bin/sh -c \
   'egrep "^[^#].*\sswap\s.*noauto" /etc/fstab | awk \'{print $1}\' | xargs -tL1 swapon'
 ExecStop=/bin/sh -c \
   'egrep "^[^#].*\sswap\s.*noauto" /etc/fstab | awk \'{print $1}\' | xargs -tL1 swapoff'
+TimeoutStopSec=infinity
+
+[Install]
+RequiredBy=systemd-hibernate.service systemd-hybrid-sleep.service
