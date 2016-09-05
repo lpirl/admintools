@@ -106,11 +106,11 @@ def run(call_args, *args, **kwargs):
 
   return subprocess_run(call_args, *args, **kwargs)
 
-def dirs_differ(a, b):
-  if isdir(a) != isdir(b):
+def dirs_differ(dir_a, dir_b):
+  if isdir(dir_a) != isdir(dir_b):
     return True
   try:
-    run(("diff", "-qr", a, b))
+    run(("diff", "-qr", dir_a, dir_b))
   except CalledProcessError as diff_exception:
     if diff_exception.returncode == 1:
       return True
@@ -179,7 +179,7 @@ class FileSystem(object):
                      mount_options=None, password=None, password_file=None):
 
     if (mountpoint and uuid) or (not mountpoint and not uuid):
-      ProgrammingError("Either `mountpoint` or `uuid` is required.")
+      ArgumentError("Either `mountpoint` or `uuid` is required.")
 
     self.cleaner = cleaner
     self.mount_options = mount_options
@@ -397,7 +397,7 @@ def _main(cleaner):
 
   debug("check bootable flag on partition %s",
         dest_fs.partition_device_path)
-  sfdisk_result= run(("sfdisk",  "--activate", dest_fs.device_path),
+  sfdisk_result= run(("sfdisk", "--activate", dest_fs.device_path),
                      stdout=PIPE)
   if dest_fs.partition_device_path not in sfdisk_result.stdout.decode():
     info("set bootable flag on partition %s",
