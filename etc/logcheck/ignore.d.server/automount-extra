@@ -1,0 +1,2 @@
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ automount\[[[:digit:]]+\]: key "index\.[[:alnum:]]{1,5}" not found in map source\(s\).$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ automount\[[[:digit:]]+\]: key "\.DAV" not found in map source\(s\).$
