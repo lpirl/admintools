@@ -1,0 +1,12 @@
+--- apticron	2016-01-15 22:16:05.000000000 +0800
++++ /tmp/apticron	2016-01-26 09:25:49.359961187 +0800
+@@ -4,7 +4,8 @@
+ # implementations in Debian. Make sure we send proper headers, and a
+ # text/plain content type.
+ Mailx() {
+-	if [ "x`readlink -e /usr/bin/mailx`" = "x/usr/bin/heirloom-mailx" ]
++	local MAILER="`readlink -e /usr/bin/mailx`"
++	if [ x$MAILER = "x/usr/bin/heirloom-mailx" -o x$MAILER = "x/usr/bin/s-nail" ]
+ 	then
+ 		# heirloom-mailx creates correct headers, but needs help
+ 		# if the terminal charset (LC_CTYPE) is no UTF-8 locale
