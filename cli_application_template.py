@@ -6,7 +6,7 @@ This is a template for simple Python 3 CLI applications.
 """
 
 import argparse
-import logging
+from logging import getLogger, DEBUG, INFO, debug, info
 from subprocess import check_output
 
 if __name__ != '__main__':
@@ -15,7 +15,8 @@ if __name__ != '__main__':
   )
 
 parser = argparse.ArgumentParser(
-  description="Example CLI application."
+  description=__doc__,
+  formatter_class=argparse.ArgumentDefaultsHelpFormatter
 )
 
 parser.add_argument('-d', '--debug', action='store_true', default=False,
@@ -29,14 +30,15 @@ parser.add_argument('-v', '--verbose', action='store_true', default=False,
 #parser.add_argument('on_or_off', choices = ['on', 'off'], nargs='?',
 #                    help='activate or deactivate')
 
-cli_args = parser.parse_args()
+args = parser.parse_args()
 
 # set up logger
-logging.getLogger().name = ""
-if cli_args.debug:
-  logging.getLogger().setLevel(logging.DEBUG)
-if cli_args.verbose:
-  logging.getLogger().setLevel(logging.INFO)
+logger = getLogger()
+logger.name = ""
+if args.debug:
+  logger.setLevel(DEBUG)
+if args.verbose:
+  logger.setLevel(INFO)
 
 
 output = check_output(("echo", "Hello World"), universal_newlines=True)
