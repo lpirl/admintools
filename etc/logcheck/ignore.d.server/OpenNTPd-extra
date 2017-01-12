@@ -4,3 +4,6 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ ntpd\[[[:digit:]]+\]: clock is now (un)?synced$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ ntpd\[[[:digit:]]+\]: reply from [[:xdigit:].:]{3,39}: not synced( \(alarm\))?, next query [[:digit:]]+s$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ ntpd\[[[:digit:]]+\]: reply from [[:xdigit:].:]{3,39}: negative delay -[[:digit:]]+\.[[:digit:]]+s, next query [[:digit:]]+s$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ ntpd\[[[:digit:]]+\]: recvfrom [[:xdigit:].:]{3,39}: Connection refused$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ ntpd\[[[:digit:]]+\]: [[:digit:]]+ out of [[:digit:]]+ peers valid$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ ntpd\[[[:digit:]]+\]: bad peer from pool [^[:space:]]+ \([[:xdigit:].:]{3,39}\)$

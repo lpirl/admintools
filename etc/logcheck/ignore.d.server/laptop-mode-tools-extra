@@ -1,0 +1,3 @@
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ laptop_mode\[[[:digit:]]+\]: Laptop mode$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ laptop[-_]mode(\[[[:digit:]]+\])?: enabled, active \[unchanged\]$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: (Reload|Start)(ing|ed) Laptop Mode Tools( - Battery Polling Service)?\.{1,3}$
