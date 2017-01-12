@@ -26,11 +26,11 @@ import sys
 import argparse
 from logging import DEBUG, INFO, ERROR, getLogger, info, debug, error
 from os import rmdir, sync, umask, remove
-from os.path import basename, dirname, join, isdir
+from os.path import basename, dirname, join, isdir, sep as path_sep
 from subprocess import (run as subprocess_run, DEVNULL, PIPE,
                         CalledProcessError)
 from tempfile import mkstemp, mkdtemp, _get_candidate_names
-from re import sub, search
+from re import sub, search, escape
 from fileinput import FileInput
 
 RSYNC_OPTS = (
@@ -53,13 +53,14 @@ RSYNC_OPTS = (
 )
 
 CHROOT_BINDS = (
-  "proc",
-  "sys",
-  "dev",
+  "/proc",
+  "/sys",
+  "/dev",
 )
 
 PARTITION_NUMBER_PATTERN = r'[0-9]+$'
 CRYPTSETUP_PATH_TEMPLATE = "/dev/mapper/%s"
+CRYPTSETUP_NAME = "cryptroot"
 DEVICE_BY_PATH_TEMPLATE = "/dev/disk/by-uuid/%s"
 
 TEMPFILE_DELIM = "__"
@@ -135,6 +136,19 @@ def grub_is_installed(device_path):
     else:
       raise exception
   return True
+
+def add_line_to_file(path, line):
+  debug("adding to file '%s': %s", path, line)
+  with open(path, "a") as path_fp:
+    path_fp.write("\n%s\n" % line)
+
+def replace_in_file(path, old, new):
+  debug("replacing in file '%s': '%s' with '%s'", path, old, new)
+  with FileInput(path, inplace=True) as path_fp:
+    for line in path_fp:
+      sys.stdout.write(
+        sub(old, new, line)
+      )
 
 class FileSystem(object):
   """
@@ -286,13 +300,18 @@ class FileSystem(object):
     mount_args.append("UUID=%s" % self.filesystem_uuid)
     mount_args.append(self.mountpoint)
     mount_exit_code = run(mount_args)
-    self.cleaner.add_job(run, ("umount", "--lazy", self.mountpoint))
+    self.cleaner.add_job(run, ("umount", self.mountpoint))
 
   def path(self, *bits):
     """
-    Return path relative to mountpoint
+    Return path relative to mountpoint.
+    Absolute paths in ``bits`` will be made relative.
     """
-    return join(self.mountpoint, *bits)
+    out_path = self.mountpoint
+    for bit in bits:
+      bit = bit.lstrip(path_sep)
+      out_path = join(out_path, bit)
+    return out_path
 
   @property
   def partition_number(self):
@@ -368,7 +387,7 @@ def _main(cleaner):
   info("copying contents of '%s' to '%s'",
        src_fs.mountpoint, dest_fs.mountpoint)
   # …path("") -> path ends with a separator
-  run(("echo", "rsync",) + RSYNC_OPTS +
+  run(("rsync",) + RSYNC_OPTS +
       (src_fs.path(""), dest_fs.mountpoint))
 
   debug("mounting %s to target root", CHROOT_BINDS)
@@ -379,26 +398,61 @@ def _main(cleaner):
   chroot_run = lambda args: run(("chroot", dest_fs.mountpoint) + args)
 
   info("update fstab in target file system")
-  debug("replacing any: '%s' with '%s'",
-        src_fs.filesystem_device_path, dest_fs.filesystem_device_path)
-  debug("replacing any: '%s' with '%s'",
-        src_fs.filesystem_uuid, dest_fs.filesystem_uuid)
-  with FileInput(dest_fs.path("etc/fstab"), inplace=True) as fstab_fp:
-    for line in fstab_fp:
-      line = line.replace(
-        src_fs.filesystem_device_path, dest_fs.filesystem_device_path
+  replace_in_file(
+    dest_fs.path("etc/fstab"),
+    escape(src_fs.filesystem_device_path),
+    escape(dest_fs.filesystem_device_path)
+  )
+  replace_in_file(
+    dest_fs.path("etc/fstab"),
+    escape(src_fs.filesystem_uuid),
+    escape(dest_fs.filesystem_uuid)
+  )
+
+  debug("deleting any: 'resume=…' in grub configuration")
+  replace_in_file(dest_fs.path("etc/default/grub"),
+                  r"resume=[^\"'\t\n ]+", "")
+
+  if dest_fs.is_luks():
+
+    debug("update crypttab in target file system")
+    add_line_to_file(
+      dest_fs.path("/etc/crypttab"),
+      " ".join((
+        CRYPTSETUP_NAME,
+        CRYPTSETUP_PATH_TEMPLATE % dest_fs.uuid_on_partition,
+        dest_fs.password_file,
+        "luks,keyscript=/bin/cat"
+      ))
+    )
+
+    debug("enabling cryptroot in kernel command line")
+    replace_in_file(
+      dest_fs.path("/etc/default/grub"),
+      'GRUB_CMDLINE_LINUX_DEFAULT="',
+      'GRUB_CMDLINE_LINUX_DEFAULT="cryptdevice=%s:%s ' % (
+        DEVICE_BY_PATH_TEMPLATE % dest_fs.uuid_on_partition,
+        CRYPTSETUP_NAME
       )
-      line = line.replace(
-        src_fs.filesystem_uuid, dest_fs.filesystem_uuid
+    )
+
+    debug("enabling encrypted disks in config of target Grub")
+    add_line_to_file(
+      dest_fs.path("/etc/default/grub"),
+      "GRUB_ENABLE_CRYPTODISK=y"
+    )
+
+    debug("adding support for cryptsetup in target initramfs")
+    add_line_to_file(
+      dest_fs.path("/etc/cryptsetup-initramfs/conf-hook"),
+      "CRYPTSETUP=y"
       )
-      sys.stdout.write(line)
-      # TODO: add nofail
-      # TODO: warn if nothing replaced
+    chroot_run(("update-initramfs", "-u"))
 
   debug("check bootable flag on partition %s",
         dest_fs.partition_device_path)
-  sfdisk_result= run(("sfdisk", "--activate", dest_fs.device_path),
-                     stdout=PIPE)
+  sfdisk_result= run(("sfdisk", "--activate", "--no-reread",
+                      dest_fs.device_path), stdout=PIPE)
   if dest_fs.partition_device_path not in sfdisk_result.stdout.decode():
     info("set bootable flag on partition %s",
          dest_fs.partition_device_path)
@@ -426,6 +480,8 @@ if __name__ == '__main__':
     abnormal_termination = True
     raise exception
   finally:
+    import pdb
+    pdb.set_trace()
     info("running cleanup jobs")
     cleaner.do_all_jobs()
 
