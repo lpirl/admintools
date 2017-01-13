@@ -32,9 +32,11 @@ from subprocess import (run as subprocess_run, DEVNULL, PIPE,
 from tempfile import mkstemp, mkdtemp, _get_candidate_names
 from re import sub, search, escape
 from fileinput import FileInput
+from shlex import split as shsplit
 
 RSYNC_OPTS = (
   "--archive",
+  "--relative",
   "--verbose",
   "--delete-during",
   "--one-file-system",
@@ -44,7 +46,6 @@ RSYNC_OPTS = (
   "--exclude=/tmp/*",
   "--exclude=/sys/*",
   "--exclude=/run/*",
-  "--exclude=/home/*",
   "--exclude=/var/cache/*",
   "--exclude=/var/lock/*",
   "--exclude=/var/log/*",
@@ -61,7 +62,7 @@ CHROOT_BINDS = (
 PARTITION_NUMBER_PATTERN = r'[0-9]+$'
 CRYPTSETUP_PATH_TEMPLATE = "/dev/mapper/%s"
 CRYPTSETUP_NAME = "cryptroot"
-DEVICE_BY_PATH_TEMPLATE = "/dev/disk/by-uuid/%s"
+DEVICE_BY_UUID_TEMPLATE = "/dev/disk/by-uuid/%s"
 
 TEMPFILE_DELIM = "__"
 TEMPFILE_PREFIX = basename(sys.argv[0]) + TEMPFILE_DELIM
@@ -142,13 +143,52 @@ def add_line_to_file(path, line):
   with open(path, "a") as path_fp:
     path_fp.write("\n%s\n" % line)
 
-def replace_in_file(path, old, new):
-  debug("replacing in file '%s': '%s' with '%s'", path, old, new)
+def _process_lines_in_file(path, func):
+  debug("processing lines in file '%s'", path)
   with FileInput(path, inplace=True) as path_fp:
     for line in path_fp:
       sys.stdout.write(
-        sub(old, new, line)
+        func(line)
       )
+
+def replace_in_file(path, old, new):
+  debug("replacing in file '%s': '%s' with '%s'", path, old, new)
+  _process_lines_in_file(
+    path, lambda line: line.replace(old, new)
+  )
+
+def sub_in_file(path, old, new):
+  debug("substituting in file '%s': '%s' with '%s'", path, old, new)
+  _process_lines_in_file(
+    path, lambda line: sub(old, new, line)
+  )
+
+def rsync(src_fs, dest_fs, cli_args):
+
+  run_args = ["rsync"]
+  run_args.extend(RSYNC_OPTS)
+
+  debug("assembling rsync include and exclude args")
+  for switch, args in (("--include", cli_args.includes),
+                       ("--exclude", cli_args.excludes)):
+    for arg in args or []:
+      assert isinstance(arg, str) and arg != ""
+      run_args.append(switch)
+      run_args.append(arg)
+
+  debug("assembling extra rsync args")
+  for option in cli_args.rsync_options or []:
+    run_args.extend(shsplit(option))
+
+  debug("assembling rsync source paths")
+  # the loop looks a bit awkward but it nicely scopes the variable as
+  # the loops above do
+  for source in ["/"] + (cli_args.source_paths or []):
+    run_args.append(src_fs.path(source))
+
+  run_args.append(dest_fs.mountpoint)
+
+  run(run_args)
 
 class FileSystem(object):
   """
@@ -346,9 +386,12 @@ def _main(cleaner):
   parser.add_argument('-r', '--rsync_option', action='append',
                       dest="rsync_options",
                       help='options to pass to rsync for copying files')
-  parser.add_argument('-i', '--include', action='append',
+  parser.add_argument('-s', '--source', action='append', dest="source_paths",
+                      help=('source paths to include other than (the ' +
+                            'file system mount on) /'))
+  parser.add_argument('-i', '--include', action='append', dest="includes",
                       help='paths to include in backup (see man 1 rsync)')
-  parser.add_argument('-e', '--exclude', action='append',
+  parser.add_argument('-e', '--exclude', action='append', dest="excludes",
                       help='paths to exclude from backup (see man 1 rsync)')
   password_group = parser.add_mutually_exclusive_group()
   password_group.add_argument('-p', '--password', help=('password for '
@@ -384,11 +427,7 @@ def _main(cleaner):
   update_grub = dirs_differ(src_fs.path("boot"), dest_fs.path("boot"))
   info("Grub needs to be updated: %r", update_grub)
 
-  info("copying contents of '%s' to '%s'",
-       src_fs.mountpoint, dest_fs.mountpoint)
-  # …path("") -> path ends with a separator
-  run(("rsync",) + RSYNC_OPTS +
-      (src_fs.path(""), dest_fs.mountpoint))
+  rsync(src_fs, dest_fs, cli_args)
 
   debug("mounting %s to target root", CHROOT_BINDS)
   for bind in CHROOT_BINDS:
@@ -400,18 +439,18 @@ def _main(cleaner):
   info("update fstab in target file system")
   replace_in_file(
     dest_fs.path("etc/fstab"),
-    escape(src_fs.filesystem_device_path),
-    escape(dest_fs.filesystem_device_path)
+    src_fs.filesystem_device_path,
+    dest_fs.filesystem_device_path
   )
   replace_in_file(
     dest_fs.path("etc/fstab"),
-    escape(src_fs.filesystem_uuid),
-    escape(dest_fs.filesystem_uuid)
+    src_fs.filesystem_uuid,
+    dest_fs.filesystem_uuid
   )
 
   debug("deleting any: 'resume=…' in grub configuration")
-  replace_in_file(dest_fs.path("etc/default/grub"),
-                  r"resume=[^\"'\t\n ]+", "")
+  sub_in_file(dest_fs.path("etc/default/grub"),
+              r"resume=[^\"'\t\n ]+", "")
 
   if dest_fs.is_luks():
 
@@ -420,7 +459,7 @@ def _main(cleaner):
       dest_fs.path("/etc/crypttab"),
       " ".join((
         CRYPTSETUP_NAME,
-        CRYPTSETUP_PATH_TEMPLATE % dest_fs.uuid_on_partition,
+        DEVICE_BY_UUID_TEMPLATE % dest_fs.uuid_on_partition,
         dest_fs.password_file,
         "luks,keyscript=/bin/cat"
       ))
@@ -430,9 +469,8 @@ def _main(cleaner):
     replace_in_file(
       dest_fs.path("/etc/default/grub"),
       'GRUB_CMDLINE_LINUX_DEFAULT="',
-      'GRUB_CMDLINE_LINUX_DEFAULT="cryptdevice=%s:%s ' % (
-        DEVICE_BY_PATH_TEMPLATE % dest_fs.uuid_on_partition,
-        CRYPTSETUP_NAME
+      'GRUB_CMDLINE_LINUX_DEFAULT="cryptopts=source=%s ' % (
+        DEVICE_BY_UUID_TEMPLATE % dest_fs.uuid_on_partition,
       )
     )
 
@@ -442,6 +480,7 @@ def _main(cleaner):
       "GRUB_ENABLE_CRYPTODISK=y"
     )
 
+    # should be detected automagically
     debug("adding support for cryptsetup in target initramfs")
     add_line_to_file(
       dest_fs.path("/etc/cryptsetup-initramfs/conf-hook"),
@@ -480,8 +519,6 @@ if __name__ == '__main__':
     abnormal_termination = True
     raise exception
   finally:
-    import pdb
-    pdb.set_trace()
     info("running cleanup jobs")
     cleaner.do_all_jobs()
 
