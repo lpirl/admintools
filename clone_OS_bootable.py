@@ -53,12 +53,6 @@ RSYNC_OPTS = (
   "--exclude=/var/spool/*",
 )
 
-CHROOT_BINDS = (
-  "/proc",
-  "/sys",
-  "/dev",
-)
-
 PARTITION_NUMBER_PATTERN = r'[0-9]+$'
 CRYPTSETUP_PATH_TEMPLATE = "/dev/mapper/%s"
 CRYPTSETUP_NAME = "cryptroot"
@@ -66,6 +60,8 @@ DEVICE_BY_UUID_TEMPLATE = "/dev/disk/by-uuid/%s"
 
 TEMPFILE_DELIM = "__"
 TEMPFILE_PREFIX = basename(sys.argv[0]) + TEMPFILE_DELIM
+
+
 
 class Cleaner(object):
 
@@ -86,115 +82,19 @@ class Cleaner(object):
          func.__name__, args, kwargs)
     func(*args, **kwargs)
 
-def run(call_args, *args, **kwargs):
 
-  # enforce non-zero exit codes to raise an exception
-  kwargs["check"] = True
-
-  if getLogger().level <= DEBUG:
-    kwargs.setdefault("stdout", sys.stdout)
-    kwargs.setdefault("stderr", sys.stderr)
-  else:
-    kwargs.setdefault("stdout", DEVNULL)
-    kwargs.setdefault("stderr", DEVNULL)
-
-  # subprocess.Popen needs an indexable type as 1st arg
-  # try to convert to tuple if required
-  if not hasattr(call_args, "__getitem__"):
-    call_args = tuple(call_args)
-
-  debug("running '%s' with args: %s and kwargs: %s:",
-        " ".join(call_args), args, kwargs)
-
-  return subprocess_run(call_args, *args, **kwargs)
-
-def dirs_differ(dir_a, dir_b):
-  if isdir(dir_a) != isdir(dir_b):
-    return True
-  try:
-    run(("diff", "-qr", dir_a, dir_b))
-  except CalledProcessError as diff_exception:
-    if diff_exception.returncode == 1:
-      return True
-    raise diff_exception
-  return False
-
-def grub_is_installed(device_path):
-  try:
-    run(
-      (
-        " | ".join((
-          "sudo dd if='%s' bs=512 count=1 2>/dev/null" % device_path,
-          "strings",
-          "grep -q GRUB"
-        )),
-      ),
-      shell=True
-    )
-  except CalledProcessError as exception:
-    if exception.returncode == 1:
-      return False
-    else:
-      raise exception
-  return True
-
-def add_line_to_file(path, line):
-  debug("adding to file '%s': %s", path, line)
-  with open(path, "a") as path_fp:
-    path_fp.write("\n%s\n" % line)
-
-def _process_lines_in_file(path, func):
-  debug("processing lines in file '%s'", path)
-  with FileInput(path, inplace=True) as path_fp:
-    for line in path_fp:
-      sys.stdout.write(
-        func(line)
-      )
-
-def replace_in_file(path, old, new):
-  debug("replacing in file '%s': '%s' with '%s'", path, old, new)
-  _process_lines_in_file(
-    path, lambda line: line.replace(old, new)
-  )
-
-def sub_in_file(path, old, new):
-  debug("substituting in file '%s': '%s' with '%s'", path, old, new)
-  _process_lines_in_file(
-    path, lambda line: sub(old, new, line)
-  )
-
-def rsync(src_fs, dest_fs, cli_args):
-
-  run_args = ["rsync"]
-  run_args.extend(RSYNC_OPTS)
-
-  debug("assembling rsync include and exclude args")
-  for switch, args in (("--include", cli_args.includes),
-                       ("--exclude", cli_args.excludes)):
-    for arg in args or []:
-      assert isinstance(arg, str) and arg != ""
-      run_args.append(switch)
-      run_args.append(arg)
-
-  debug("assembling extra rsync args")
-  for option in cli_args.rsync_options or []:
-    run_args.extend(shsplit(option))
-
-  debug("assembling rsync source paths")
-  # the loop looks a bit awkward but it nicely scopes the variable as
-  # the loops above do
-  for source in ["/"] + (cli_args.source_paths or []):
-    run_args.append(src_fs.path(source))
-
-  run_args.append(dest_fs.mountpoint)
-
-  run(run_args)
 
 class FileSystem(object):
   """
   Provides all required information about a file system (see assert
   statements at the end of __init__) and does everything to get them.
   """
+
+  CHROOT_BINDS = (
+    "/proc",
+    "/sys",
+    "/dev",
+  )
 
   @staticmethod
   def get_partition_by_uuid(uuid):
@@ -235,6 +135,7 @@ class FileSystem(object):
     if (mountpoint and uuid) or (not mountpoint and not uuid):
       ArgumentError("Either `mountpoint` or `uuid` is required.")
 
+    self.chroot_prepared = False
     self.cleaner = cleaner
     self.mount_options = mount_options
 
@@ -369,7 +270,204 @@ class FileSystem(object):
     assert device.startswith("/dev/")
     return device
 
-def _main(cleaner):
+  def prepare_chroot(self, src_fs):
+    assert not self.chroot_prepared
+    debug("mounting %s to target root", self.CHROOT_BINDS)
+    for bind in self.CHROOT_BINDS:
+      run(("mount", "--bind", src_fs.path(bind), self.path(bind)))
+      self.cleaner.add_job(run, ("umount", "--lazy", self.path(bind)))
+    self.cleaner.add_job(setattr, self, "chroot_prepared", False)
+    self.chroot_prepared = True
+
+  def run_chrooted(self, call_args, *args, **kwargs):
+    """
+    Run something chrooted in the mount point of file system.
+    """
+    assert self.chroot_prepared
+    run(("chroot", self.mountpoint) + call_args, *args, **kwargs)
+
+def run(call_args, *args, **kwargs):
+
+  # enforce non-zero exit codes to raise an exception
+  kwargs["check"] = True
+
+  if getLogger().level <= DEBUG:
+    kwargs.setdefault("stdout", sys.stdout)
+    kwargs.setdefault("stderr", sys.stderr)
+  else:
+    kwargs.setdefault("stdout", DEVNULL)
+    kwargs.setdefault("stderr", DEVNULL)
+
+  # subprocess.Popen needs an indexable type as 1st arg
+  # try to convert to tuple if required
+  if not hasattr(call_args, "__getitem__"):
+    call_args = tuple(call_args)
+
+  debug("running '%s' with args: %s and kwargs: %s:",
+        " ".join(call_args), args, kwargs)
+  return subprocess_run(call_args, *args, **kwargs)
+
+
+
+def grub_is_installed(device_path):
+  try:
+    run(
+      (
+        " | ".join((
+          "sudo dd if='%s' bs=512 count=1 2>/dev/null" % device_path,
+          "strings",
+          "grep -q GRUB"
+        )),
+      ),
+      shell=True
+    )
+  except CalledProcessError as exception:
+    if exception.returncode == 1:
+      return False
+    else:
+      raise exception
+  return True
+
+
+
+def add_line_to_file(path, line):
+  debug("adding to file '%s': %s", path, line)
+  with open(path, "a") as path_fp:
+    path_fp.write("\n%s\n" % line)
+
+
+
+def _process_lines_in_file(path, func):
+  debug("processing lines in file '%s'", path)
+  with FileInput(path, inplace=True) as path_fp:
+    for line in path_fp:
+      sys.stdout.write(
+        func(line)
+      )
+
+
+
+def replace_in_file(path, old, new):
+  debug("replacing in file '%s': '%s' with '%s'", path, old, new)
+  _process_lines_in_file(
+    path, lambda line: line.replace(old, new)
+  )
+
+
+
+def sub_in_file(path, old, new):
+  debug("substituting in file '%s': '%s' with '%s'", path, old, new)
+  _process_lines_in_file(
+    path, lambda line: sub(old, new, line)
+  )
+
+
+
+def rsync(src_fs, dest_fs, cli_args):
+
+  run_args = ["rsync"]
+  run_args.extend(RSYNC_OPTS)
+
+  debug("assembling rsync include and exclude args")
+  for switch, args in (("--include", cli_args.includes),
+                       ("--exclude", cli_args.excludes)):
+    for arg in args or []:
+      assert isinstance(arg, str) and arg != ""
+      run_args.append(switch)
+      run_args.append(arg)
+
+  debug("assembling extra rsync args")
+  for option in cli_args.rsync_options or []:
+    run_args.extend(shsplit(option))
+
+  debug("assembling rsync source paths")
+  # the loop looks a bit awkward but it nicely scopes the variable as
+  # the loops above do
+  for source in ["/"] + (cli_args.source_paths or []):
+    run_args.append(src_fs.path(source))
+
+  run_args.append(dest_fs.mountpoint)
+
+  run(run_args)
+
+
+
+def fix_fstab(src_fs, dest_fs):
+  info("update fstab in target file system")
+  replace_in_file(
+    dest_fs.path("etc/fstab"),
+    src_fs.filesystem_device_path,
+    dest_fs.filesystem_device_path
+  )
+  replace_in_file(
+    dest_fs.path("etc/fstab"),
+    src_fs.filesystem_uuid,
+    dest_fs.filesystem_uuid
+  )
+
+
+
+def fix_grub_config(dest_fs):
+  debug("deleting any: 'resume=…' in grub configuration")
+  sub_in_file(dest_fs.path("etc/default/grub"),
+              r"resume=[^\"'\t\n ]+", "")
+
+
+
+def make_luks_root_bootable(dest_fs):
+
+  if not dest_fs.is_luks():
+    return
+
+  debug("update crypttab in target file system")
+  add_line_to_file(
+    dest_fs.path("/etc/crypttab"),
+    " ".join((
+      CRYPTSETUP_NAME,
+      DEVICE_BY_UUID_TEMPLATE % dest_fs.uuid_on_partition,
+      dest_fs.password_file,
+      "luks,keyscript=/bin/cat"
+    ))
+  )
+
+  debug("enabling cryptroot in kernel command line")
+  replace_in_file(
+    dest_fs.path("/etc/default/grub"),
+    'GRUB_CMDLINE_LINUX_DEFAULT="',
+    'GRUB_CMDLINE_LINUX_DEFAULT="cryptopts=source=%s ' % (
+      DEVICE_BY_UUID_TEMPLATE % dest_fs.uuid_on_partition,
+    )
+  )
+
+  debug("enabling encrypted disks in config of target Grub")
+  add_line_to_file(
+    dest_fs.path("/etc/default/grub"),
+    "GRUB_ENABLE_CRYPTODISK=y"
+  )
+
+  debug("adding support for cryptsetup in target initramfs")
+  add_line_to_file(
+    dest_fs.path("/etc/cryptsetup-initramfs/conf-hook"),
+    "CRYPTSETUP=y"
+    )
+  dest_fs.run_chrooted(("update-initramfs", "-u"))
+
+
+
+def ensure_bootable_flag(dest_fs):
+  debug("check bootable flag on partition %s",
+        dest_fs.partition_device_path)
+  sfdisk_result= run(("sfdisk", "--activate", "--no-reread",
+                      dest_fs.device_path), stdout=PIPE)
+  if dest_fs.partition_device_path not in sfdisk_result.stdout.decode():
+    info("set bootable flag on partition %s",
+         dest_fs.partition_device_path)
+    run(("sfdisk",  "--activate", dest_fs.device_path,
+         dest_fs.partition_number))
+
+
+
+def main(cleaner):
   parser = argparse.ArgumentParser(
     description="Creates a bootable copy of the current file system root (/)."
   )
@@ -423,88 +521,24 @@ def _main(cleaner):
                        password_file=cli_args.password_file,
                        mount_options=cli_args.mount_options)
 
-  debug("checking whether grub needs to be updated")
-  update_grub = dirs_differ(src_fs.path("boot"), dest_fs.path("boot"))
-  info("Grub needs to be updated: %r", update_grub)
-
   rsync(src_fs, dest_fs, cli_args)
 
-  debug("mounting %s to target root", CHROOT_BINDS)
-  for bind in CHROOT_BINDS:
-    run(("mount", "--bind", src_fs.path(bind), dest_fs.path(bind)))
-    cleaner.add_job(run, ("umount", "--lazy", dest_fs.path(bind)))
+  dest_fs.prepare_chroot(src_fs)
 
-  chroot_run = lambda args: run(("chroot", dest_fs.mountpoint) + args)
+  fix_fstab(src_fs, dest_fs)
 
-  info("update fstab in target file system")
-  replace_in_file(
-    dest_fs.path("etc/fstab"),
-    src_fs.filesystem_device_path,
-    dest_fs.filesystem_device_path
-  )
-  replace_in_file(
-    dest_fs.path("etc/fstab"),
-    src_fs.filesystem_uuid,
-    dest_fs.filesystem_uuid
-  )
+  fix_grub_config(dest_fs)
 
-  debug("deleting any: 'resume=…' in grub configuration")
-  sub_in_file(dest_fs.path("etc/default/grub"),
-              r"resume=[^\"'\t\n ]+", "")
+  make_luks_root_bootable(dest_fs)
 
-  if dest_fs.is_luks():
+  ensure_bootable_flag(dest_fs)
 
-    debug("update crypttab in target file system")
-    add_line_to_file(
-      dest_fs.path("/etc/crypttab"),
-      " ".join((
-        CRYPTSETUP_NAME,
-        DEVICE_BY_UUID_TEMPLATE % dest_fs.uuid_on_partition,
-        dest_fs.password_file,
-        "luks,keyscript=/bin/cat"
-      ))
-    )
-
-    debug("enabling cryptroot in kernel command line")
-    replace_in_file(
-      dest_fs.path("/etc/default/grub"),
-      'GRUB_CMDLINE_LINUX_DEFAULT="',
-      'GRUB_CMDLINE_LINUX_DEFAULT="cryptopts=source=%s ' % (
-        DEVICE_BY_UUID_TEMPLATE % dest_fs.uuid_on_partition,
-      )
-    )
-
-    debug("enabling encrypted disks in config of target Grub")
-    add_line_to_file(
-      dest_fs.path("/etc/default/grub"),
-      "GRUB_ENABLE_CRYPTODISK=y"
-    )
-
-    # should be detected automagically
-    debug("adding support for cryptsetup in target initramfs")
-    add_line_to_file(
-      dest_fs.path("/etc/cryptsetup-initramfs/conf-hook"),
-      "CRYPTSETUP=y"
-      )
-    chroot_run(("update-initramfs", "-u"))
-
-  debug("check bootable flag on partition %s",
-        dest_fs.partition_device_path)
-  sfdisk_result= run(("sfdisk", "--activate", "--no-reread",
-                      dest_fs.device_path), stdout=PIPE)
-  if dest_fs.partition_device_path not in sfdisk_result.stdout.decode():
-    info("set bootable flag on partition %s",
-         dest_fs.partition_device_path)
-    run(("sfdisk",  "--activate", dest_fs.device_path,
-         dest_fs.partition_number))
-
-  if update_grub:
-    info("update Grub configuration in target file system")
-    chroot_run(("update-grub",))
+  info("update Grub configuration in target file system")
+  dest_fs.run_chrooted(("update-grub",))
 
   if not grub_is_installed(dest_fs.device_path):
     info("installing Grub on %s", dest_fs.device_path)
-    chroot_run(("grub-install", dest_fs.device_path))
+    dest_fs.run_chrooted(("grub-install", dest_fs.device_path))
   else:
     info("Grub already installed on %s", dest_fs.device_path)
 
@@ -513,7 +547,7 @@ if __name__ == '__main__':
   cleaner = Cleaner()
   abnormal_termination = False
   try:
-    _main(cleaner)
+    main(cleaner)
   except Exception as exception:
     error("abnormal termination (see error at end of output)")
     abnormal_termination = True
