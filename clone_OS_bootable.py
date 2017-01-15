@@ -536,7 +536,7 @@ def main(cleaner):
 
   ensure_bootable_flag(dest_fs)
 
-  info("let Grub mkconfig its configuration in target file system")
+  info("let Grub collect its configuration in target file system")
   dest_fs.run_chrooted(("update-grub",))
 
   if not grub_is_installed(dest_fs.device_path):
