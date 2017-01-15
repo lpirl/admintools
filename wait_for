@@ -7,14 +7,16 @@ This can be useful for cron jobs on notebooks, e.g. to defer
 their execution until the system is on-line and on AC.
 """
 
-from sys import stdout, stderr
+from sys import stdout, stderr, argv, exit
 import argparse
 from logging import getLogger, INFO, info
 from subprocess import DEVNULL, run as subprocess_run
 from abc import ABCMeta, abstractmethod
 from time import sleep
 from signal import signal, alarm, SIGALRM
-
+import socket
+from getpass import getuser
+from hashlib import md5
 
 
 def run(call_args, *args, silent=True, **kwargs):
@@ -160,9 +162,9 @@ def main():
                          help='number of seconds to wait between checks')
   argparser.add_argument('-t', '--timeout', type=int, default=7,
                          help='timeout in seconds for condition checks')
-  #~ argparser.add_argument('-s', '--single', action='store_true', default=False,
-                         #~ help=('exit with success if another instance' +
-                               #~ 'is waiting for this command already'))
+  argparser.add_argument('-s', '--single', action='store_true', default=False,
+                         help=('exit with success if another instance' +
+                               'is waiting for this command already'))
   argparser.add_argument('command', nargs=argparse.REMAINDER,
                          help=('Command with arguments to run after ' +
                                'conditions are met.'))
@@ -176,6 +178,17 @@ def main():
   getLogger().name = ""
   if args.verbose:
     getLogger().setLevel(INFO)
+
+  if args.single:
+    user = getuser()
+    instance_hash = md5(argv.__str__().encode()).hexdigest()
+    try:
+      sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+      sock.bind( '\0wait_for_%s_%s' % (user, instance_hash))
+    except socket.error:
+        info("user %s already running %s", user,
+             ' '.join(args.command))
+        exit(0)
 
   for condition in conditions:
     condition.setup(args)
