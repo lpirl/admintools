@@ -26,11 +26,11 @@ import sys
 import argparse
 from logging import DEBUG, INFO, ERROR, getLogger, info, debug, error
 from os import rmdir, sync, umask, remove
-from os.path import basename, dirname, join, isdir, sep as path_sep
+from os.path import basename, join, sep as path_sep
 from subprocess import (run as subprocess_run, DEVNULL, PIPE,
                         CalledProcessError)
-from tempfile import mkstemp, mkdtemp, _get_candidate_names
-from re import sub, search, escape
+from tempfile import mkstemp, mkdtemp
+from re import sub, search
 from fileinput import FileInput
 from shlex import split as shsplit
 
@@ -79,7 +79,7 @@ class Cleaner(object):
     # in reverse order:
     func, args, kwargs = self._jobs.pop()
     debug("cleanup: func=%s.%s, args=%r, kwargs=%r", func.__module__,
-         func.__name__, args, kwargs)
+          func.__name__, args, kwargs)
     func(*args, **kwargs)
 
 
@@ -130,10 +130,10 @@ class FileSystem(object):
     return uuid
 
   def __init__(self, cleaner, mountpoint=None, uuid=None,
-                     mount_options=None, password=None, password_file=None):
+               mount_options=None, password=None, password_file=None):
 
     if (mountpoint and uuid) or (not mountpoint and not uuid):
-      ArgumentError("Either `mountpoint` or `uuid` is required.")
+      RuntimeError("Either `mountpoint` or `uuid` is required.")
 
     self.chroot_prepared = False
     self.cleaner = cleaner
@@ -240,7 +240,7 @@ class FileSystem(object):
       mount_args.append(','.join(self.mount_options))
     mount_args.append("UUID=%s" % self.filesystem_uuid)
     mount_args.append(self.mountpoint)
-    mount_exit_code = run(mount_args)
+    run(mount_args)
     self.cleaner.add_job(run, ("umount", self.mountpoint))
 
   def path(self, *bits):
@@ -257,7 +257,7 @@ class FileSystem(object):
   @property
   def partition_number(self):
     partition_number_match = search(PARTITION_NUMBER_PATTERN,
-                                         self.partition_device_path)
+                                    self.partition_device_path)
     assert bool(partition_number_match) is True
     partition_number = partition_number_match.group(0)
     assert partition_number.isdecimal()
@@ -457,12 +457,12 @@ def make_luks_root_bootable(dest_fs):
 def ensure_bootable_flag(dest_fs):
   debug("check bootable flag on partition %s",
         dest_fs.partition_device_path)
-  sfdisk_result= run(("sfdisk", "--activate", "--no-reread",
-                      dest_fs.device_path), stdout=PIPE)
+  sfdisk_result = run(("sfdisk", "--activate", "--no-reread",
+                       dest_fs.device_path), stdout=PIPE)
   if dest_fs.partition_device_path not in sfdisk_result.stdout.decode():
     info("set bootable flag on partition %s",
          dest_fs.partition_device_path)
-    run(("sfdisk",  "--activate", dest_fs.device_path,
+    run(("sfdisk", "--activate", dest_fs.device_path,
          dest_fs.partition_number))
 
 
@@ -492,12 +492,13 @@ def main(cleaner):
   parser.add_argument('-e', '--exclude', action='append', dest="excludes",
                       help='paths to exclude from backup (see man 1 rsync)')
   password_group = parser.add_mutually_exclusive_group()
-  password_group.add_argument('-p', '--password', help=('password for '
-                              'decryption if the UUID points to a LUKS '
-                              'encrypted partition'))
-  password_group.add_argument('-f', '--password-file', help=('file '
-                              'containing a LUKS password as first line '
-                              '(see -p)'))
+  password_group.add_argument('-p', '--password',
+                              help=('password for decryption if the '
+                                    'UUID points to a LUKS encrypted ' +
+                                    'partition'))
+  password_group.add_argument('-f', '--password-file',
+                              help=('file containing a LUKS password ' +
+                                    'as first line (see -p)'))
   parser.add_argument('dest_uuid',
                       help='UUID of the file system to backup to')
 
