@@ -1,0 +1,219 @@
+#!/usr/bin/env python3
+
+"""
+This script waits for the specified conditions.
+
+This can be useful for cron jobs on notebooks, e.g. to defer
+their execution until the system is on-line and on AC.
+"""
+
+from sys import stdout, stderr
+import argparse
+from logging import getLogger, INFO, info
+from subprocess import DEVNULL, run as subprocess_run
+from abc import ABCMeta, abstractmethod
+from time import sleep
+from signal import signal, alarm, SIGALRM
+
+
+
+def run(call_args, *args, silent=True, **kwargs):
+
+  if getLogger().level <= INFO or not silent:
+    kwargs.setdefault("stdout", stdout)
+    kwargs.setdefault("stderr", stderr)
+  else:
+    kwargs.setdefault("stdout", DEVNULL)
+    kwargs.setdefault("stderr", DEVNULL)
+
+  info("running '%s'", " ".join(call_args))
+  return subprocess_run(call_args, *args, **kwargs)
+
+def timeout_handler(signum, frame):
+  raise ConditionCheckTimeout()
+
+
+
+class ConditionCheckTimeout(Exception):
+  """ raised when checks time out """
+  pass
+
+
+
+class ConditionRegistry(object, metaclass=ABCMeta):
+  """
+  Concrete subclasses of ``BaseCondition`` register at this class.
+  """
+  items = set()
+  register = items.add
+
+
+
+class BaseCondition(object, metaclass=ABCMeta):
+
+  def __init__(self, argparser):
+    """ called initially, mainly to enable the addition of arguments """
+    pass
+
+  def setup(self, parsed_args):
+    """ called once prior checks (i.e. calls to ``met``) """
+    pass
+
+  @abstractmethod
+  def met(self):
+    """ returns ``True``,  ``False`` or ``None`` (i.e. deactivated) """
+    pass
+
+  @abstractmethod
+  def __str__(self):
+    pass
+
+
+
+@ConditionRegistry.register
+class PingCondition(BaseCondition):
+  """ checks if a host is pingable """
+
+  def __init__(self, argparser):
+    argparser.add_argument("-p", "--ping", metavar="HOST",
+                          help=self.__class__.__doc__)
+    self.ip = None
+
+  def setup(self, parsed_args):
+    self.ip = parsed_args.ping
+
+  def met(self):
+    if not self.ip:
+      return None
+    result = run(("ping", "-c", "1", self.ip))
+    return result.returncode == 0
+
+  def __str__(self):
+    if self.ip:
+      return "ping %s" % self.ip
+    else:
+      return "deactivated ping condition"
+
+
+
+@ConditionRegistry.register
+class OnACCondition(BaseCondition):
+  """ checks if the system is on AC """
+
+  def __init__(self, argparser):
+    argparser.add_argument("-a", "--ac", action="store_true",
+                          help=self.__class__.__doc__)
+
+  def setup(self, parsed_args):
+    self.ac = parsed_args.ac
+
+  def met(self):
+    if not self.ac:
+      return None
+    with open("/sys/class/power_supply/AC/online") as online_fp:
+      return online_fp.readline().startswith("1")
+
+  def __str__(self):
+    if self.ac:
+      return "on AC condition"
+    else:
+      return "deactivated on AC condition"
+
+
+
+@ConditionRegistry.register
+class UUIDCondition(BaseCondition):
+  """ checks whether the specified UUID is available """
+
+  def __init__(self, argparser):
+    argparser.add_argument("-u", "--uuid",
+                          help=self.__class__.__doc__)
+    self.uuid = None
+
+  def setup(self, parsed_args):
+    self.uuid = parsed_args.uuid
+
+  def met(self):
+    if not self.uuid:
+      return None
+    result = run(("blkid", "-U", self.uuid))
+    return result.returncode == 0
+
+  def __str__(self):
+    if self.uuid:
+      return "UUID %s is available" % self.uuid
+    else:
+      return "deactivated UUID condition"
+
+
+
+def main():
+
+  argparser = argparse.ArgumentParser(
+    description=__doc__,
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter
+  )
+
+  argparser.add_argument('-v', '--verbose', action='store_true',
+                         default=False, help='turn on verbose messages')
+  argparser.add_argument('-i', '--interval', type=int, default=57,
+                         help='number of seconds to wait between checks')
+  argparser.add_argument('-t', '--timeout', type=int, default=7,
+                         help='timeout in seconds for condition checks')
+  #~ argparser.add_argument('-s', '--single', action='store_true', default=False,
+                         #~ help=('exit with success if another instance' +
+                               #~ 'is waiting for this command already'))
+  argparser.add_argument('command', nargs=argparse.REMAINDER,
+                         help=('Command with arguments to run after ' +
+                               'conditions are met.'))
+
+  conditions = set(Condition(argparser)
+                   for Condition in ConditionRegistry.items)
+
+  args = argparser.parse_args()
+
+  # set up logger
+  getLogger().name = ""
+  if args.verbose:
+    getLogger().setLevel(INFO)
+
+  for condition in conditions:
+    condition.setup(args)
+
+  signal(SIGALRM, timeout_handler)
+  timeout = args.timeout
+
+  while True:
+    all_met = True
+
+    for condition in conditions:
+      try:
+        alarm(timeout)
+        met = condition.met()
+        alarm(0)
+      except ConditionCheckTimeout:
+        info("timed out: %s", condition)
+        met = False
+
+      if met is True:
+        continue
+      elif met is False:
+        info("not met: %s", condition)
+        all_met = False
+      elif met is None:
+        # ``None`` i.e. inactive
+        pass
+      else:
+        raise ProgrammingError("shouldn't get here")
+
+    if all_met:
+      break
+    else:
+      info("sleeping %i seconds until next check", args.interval)
+      sleep(args.interval)
+
+  if args.command:
+    run(args.command, silent=False)
+
+if __name__ == '__main__':
+  main()
