@@ -388,6 +388,7 @@ def rsync(src_fs, dest_fs, cli_args):
 
   run_args.append(dest_fs.mountpoint)
 
+  info("rsyncing to target file system")
   run(run_args)
 
 
@@ -408,6 +409,7 @@ def fix_fstab(src_fs, dest_fs):
 
 
 def fix_grub_config(dest_fs):
+  info("update Grub configuration in target file system")
   debug("deleting any: 'resume=…' in grub configuration")
   sub_in_file(dest_fs.path("etc/default/grub"),
               r"resume=[^\"'\t\n ]+", "")
@@ -534,7 +536,7 @@ def main(cleaner):
 
   ensure_bootable_flag(dest_fs)
 
-  info("update Grub configuration in target file system")
+  info("let Grub mkconfig its configuration in target file system")
   dest_fs.run_chrooted(("update-grub",))
 
   if not grub_is_installed(dest_fs.device_path):
