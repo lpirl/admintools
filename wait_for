@@ -7,7 +7,7 @@ This can be useful for cron jobs on notebooks, e.g. to defer
 their execution until the system is on-line and on AC.
 """
 
-from sys import stdout, stderr, argv, exit
+from sys import stdout, stderr, argv
 import argparse
 from logging import getLogger, INFO, info
 from subprocess import DEVNULL, run as subprocess_run
@@ -78,7 +78,7 @@ class PingCondition(BaseCondition):
 
   def __init__(self, argparser):
     argparser.add_argument("-p", "--ping", metavar="HOST",
-                          help=self.__class__.__doc__)
+                           help=self.__class__.__doc__)
     self.ip = None
 
   def setup(self, parsed_args):
@@ -104,7 +104,7 @@ class OnACCondition(BaseCondition):
 
   def __init__(self, argparser):
     argparser.add_argument("-a", "--ac", action="store_true",
-                          help=self.__class__.__doc__)
+                           help=self.__class__.__doc__)
 
   def setup(self, parsed_args):
     self.ac = parsed_args.ac
@@ -129,7 +129,7 @@ class UUIDCondition(BaseCondition):
 
   def __init__(self, argparser):
     argparser.add_argument("-u", "--uuid",
-                          help=self.__class__.__doc__)
+                           help=self.__class__.__doc__)
     self.uuid = None
 
   def setup(self, parsed_args):
@@ -184,11 +184,11 @@ def main():
     instance_hash = md5(argv.__str__().encode()).hexdigest()
     try:
       sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-      sock.bind( '\0wait_for_%s_%s' % (user, instance_hash))
+      sock.bind('\0wait_for_%s_%s' % (user, instance_hash))
     except socket.error:
-        info("user %s already running %s", user,
-             ' '.join(args.command))
-        exit(0)
+      info("user %s already running %s", user,
+           ' '.join(args.command))
+      exit(0)
 
   for condition in conditions:
     condition.setup(args)
@@ -217,7 +217,7 @@ def main():
         # ``None`` i.e. inactive
         pass
       else:
-        raise ProgrammingError("shouldn't get here")
+        raise RuntimeError("shouldn't get here")
 
     if all_met:
       break
