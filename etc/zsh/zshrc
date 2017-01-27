@@ -74,7 +74,7 @@ chpwd() {
   print -l $PWD ${(u)dirstack} >$DIRSTACKFILE
 }
 
-DIRSTACKSIZE=100
+DIRSTACKSIZE=10
 
 setopt autopushd pushdsilent pushdtohome
 
