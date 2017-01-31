@@ -1,1 +1,4 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:].]+\] perf interrupt took too long \([[:digit:]]+ > [[:digit:]]+\), lowering kernel\.perf_event_max_sample_rate to [[:digit:]]+$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:].]+\] \[drm:drm_edid_block_valid \[drm\]\] \*ERROR\* EDID checksum is invalid, remainder is [0-9]+$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:].]+\] Raw EDID:$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:].]+\]  ((\s[0-9a-f]{2}){16})$
