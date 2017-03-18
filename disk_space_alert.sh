@@ -33,10 +33,15 @@ HOSTNAME=$(hostname -f)
 
 if [ "$PERCENT_USED" -gt "$PERCENT_MAX" ] ; then
     cat << EOF
-Dear Sir or Madam,
+Dear administrator,
 
-the remaining free disk space on device $1 mounted on $MOUNTPOINT is
-critically low! Used: $PERCENT_USED%
+the following file system on the host
+
+  $(hostname -f)
+
+reached a critically low level of free space:
+
+$(df -h $MOUNTPOINT | sed  's/^/  /')
 
 Sincerely yours,
 
