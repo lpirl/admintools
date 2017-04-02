@@ -507,12 +507,12 @@ def main(cleaner):
   cli_args = parser.parse_args()
 
   getLogger().name = ""
-  if cli_args.debug:
-    getLogger().setLevel(DEBUG)
-  if cli_args.verbose:
-    getLogger().setLevel(INFO)
   if cli_args.quiet:
     getLogger().setLevel(ERROR)
+  if cli_args.verbose:
+    getLogger().setLevel(INFO)
+  if cli_args.debug:
+    getLogger().setLevel(DEBUG)
   debug("logging set up")
 
   # last job (i.e. first job submitted) is always to sync disks
