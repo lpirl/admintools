@@ -266,9 +266,9 @@ fi
 #
 # copy
 #
+
 RSYNC_OPTS+=' --human-readable'
 RSYNC_OPTS+=' --one-file-system'
-RSYNC_OPTS+=' --archive'
 RSYNC_OPTS+=' --delete-during'
 RSYNC_OPTS+=' --delete-excluded'
 RSYNC_OPTS+=' --exclude=/tmp'
@@ -277,8 +277,24 @@ RSYNC_OPTS+=' --exclude="*/.cache/*"'
 RSYNC_OPTS+=' --exclude="*/Cache/*"'
 RSYNC_OPTS+=' --exclude="*/cache/*"'
 
+# --archive == -rlptgoD (no -H,-A,-X)
+RSYNC_OPTS+=' --recursive'
+RSYNC_OPTS+=' --links'
+RSYNC_OPTS+=' --times'
+RSYNC_OPTS+=' --perms'
+RSYNC_OPTS+=' --group'
+RSYNC_OPTS+=' --owner'
+RSYNC_OPTS+=' --devices'
+RSYNC_OPTS+=' --specials'
+
 if [ "$(uname -o)" != "Cygwin" ]
 then
+
+	# we do not preserve perms when on cygwin because this usually leads
+	# to inaccessible directories on the remote after first sync
+	RSYNC_OPTS+=' --perms'
+
+	# options that are not supported on cygwin
 	RSYNC_OPTS+=" --xattrs"
 	RSYNC_OPTS+=" --acls"
 	RSYNC_OPTS+=' --fake-super'
