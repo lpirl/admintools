@@ -17,9 +17,7 @@ function show_help {
 	echo "	-b	backup directory (for rsync's --backup, default: none)"
 	echo "	-c	clear the backup directory prior copy (USE WITH CARE, default: no)"
 	echo "	-s	source directory (default: '/')"
-	echo "	-t	retry timeout (default: 60)"
 	echo "	-d	dry run: don't manipulate data (default: no)"
-	echo "	-n	no retry if target host is not available (default: retry)"
 	echo "	-o	extra options to pass to rsync"
 	echo "	-v	be verbose (default: print errors only)"
 	echo
@@ -73,11 +71,9 @@ TARGET_USER=$(hostname)					# -u
 TARGET_PORT=22									# -p
 HISTORY_DIR=""									# -b
 CLEAN_HISTORY_DIR=0							# -c
-RETRY_TIMEOUT=60								# -t
 DRY_RUN=0												# -d
 VERBOSE=0												# -v
 STDOUT=/dev/null
-NO_RETRY=0											# -n
 PIDFILE_NAME=$(basename $0)_$(whoami)_$(echo "$@" | cksum | cut -d" " -f1).lock
 RSYNC_OPTS=""
 
@@ -125,16 +121,6 @@ while getopts "h?u:p:b:s:o:cdnv" opt; do
 	c)	CLEAN_HISTORY_DIR=1
 		;;
 	d)	DRY_RUN=1
-		;;
-	n)	NO_RETRY=1
-		;;
-	t)	if ! [[ "$OPTARG"  =~ ^[0-9]+$ ]]
-		then
-			errormsg_help_exit "$OPTARG is not a valid retry timeout."
-			show_help
-			exit 1
-		fi
-		RETRY_TIMEOUT=$OPTARG
 		;;
 	v)	VERBOSE=1
 		STDOUT=/dev/tty
@@ -203,23 +189,6 @@ if [ -e $PIDFILE ]; then
 fi
 trap "rm -f ${PIDFILE}; exit" INT TERM EXIT
 echo $$ > $PIDFILE
-
-
-#######################################################################
-#
-# wait until the target host is reachable
-#
-function is_online() {
-	OPTS=`[ $VERBOSE -eq 1 ] && echo "" || echo "-q"`
-	ssh $OPTS -p $TARGET_PORT  "${TARGET_USER}@${TARGET_HOST}" rsync --version > $STDOUT
-	echo $?
-}
-
-while [ $NO_RETRY -eq 0 ] && [ $(is_online) -ne 0 ]
-do
-	echo "sleeping ${RETRY_TIMEOUT}…" > $STDOUT
-	sleep ${RETRY_TIMEOUT}
-done
 
 
 #######################################################################
