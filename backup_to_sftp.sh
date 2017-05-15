@@ -74,7 +74,6 @@ CLEAN_HISTORY_DIR=0							# -c
 DRY_RUN=0												# -d
 VERBOSE=0												# -v
 STDOUT=/dev/null
-PIDFILE_NAME=$(basename $0)_$(whoami)_$(echo "$@" | cksum | cut -d" " -f1).lock
 RSYNC_OPTS=""
 
 while getopts "h?u:p:b:s:o:cdnv" opt; do
@@ -166,29 +165,6 @@ TARGET_DIR="$2"
 # check dependencies
 #
 type rsync > $STDOUT || exit 1
-
-#######################################################################
-#
-# make sure only one instance runs at a time
-#
-if [ -d /var/lock ]
-then
-	PIDFILE=/var/lock/$PIDFILE_NAME
-else
-	PIDFILE=/tmp/$PIDFILE_NAME
-fi
-if [ -e $PIDFILE ]; then
-	PID=`cat $PIDFILE`
-	if kill -0 &>1 > /dev/null $PID; then
-		echo "Already running"
-		exit 1
-	else
-		echo "deleting stale pidfile…"
-		rm $PIDFILE
-	fi
-fi
-trap "rm -f ${PIDFILE}; exit" INT TERM EXIT
-echo $$ > $PIDFILE
 
 
 #######################################################################
