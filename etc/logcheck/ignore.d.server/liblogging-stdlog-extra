@@ -1,0 +1,1 @@
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ liblogging-stdlog:  \[origin software="rsyslogd" swVersion="[0-9.]+" x-pid="[[:digit:]]+" x-info="http:\/\/www\.rsyslog\.com"\] rsyslogd was HUPed$
