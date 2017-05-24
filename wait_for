@@ -18,6 +18,7 @@ from time import sleep
 import socket
 from getpass import getuser
 from hashlib import md5
+from os.path import isfile
 
 EXIT_CODE_ARGUMENT_ERROR = 2
 
@@ -171,6 +172,8 @@ class PortOpenCondition(BaseCondition):
 class OnACCondition(BaseCondition):
   """ checks if the system is on AC """
 
+  AC_IS_ONLINE_FILE = "/sys/class/power_supply/AC/online"
+
   def __init__(self, argparser):
     super().__init__(argparser)
     argparser.add_argument("-a", "--ac", action="store_true",
@@ -184,7 +187,9 @@ class OnACCondition(BaseCondition):
   def met(self):
     if not self.ac:
       return None
-    with open("/sys/class/power_supply/AC/online") as online_fp:
+    if not isfile("/sys/class/power_supply/AC/online"):
+      return True
+    with open(self.AC_IS_ONLINE_FILE) as online_fp:
       return online_fp.readline().startswith("1")
 
   def __str__(self):
