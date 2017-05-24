@@ -212,7 +212,7 @@ class UUIDCondition(BaseCondition):
   def met(self):
     if not self.uuid:
       return None
-    result = run(("blkid", "-U", self.uuid))
+    result = Call(("blkid", "-U", self.uuid))
     return result.returncode == 0
 
   def __str__(self):
