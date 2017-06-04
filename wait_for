@@ -152,7 +152,7 @@ class PortOpenCondition(BaseCondition):
     try:
       sock.connect((self.host, self.port))
     except (ConnectionRefusedError, socket.timeout, socket.timeout,
-            socket.gaierror):
+            socket.gaierror, OSError):
       return False
     else:
       sock.close()
