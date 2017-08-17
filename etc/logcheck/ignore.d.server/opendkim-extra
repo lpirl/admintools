@@ -3,4 +3,5 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ opendkim\[[[:digit:]]+\]: [[:alnum:]]+: message has signatures from ([._[:alnum:]-]+(, )?)+$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ opendkim\[[[:digit:]]+\]: [[:alnum:]]+: failed to parse (A|a)uthentication-(R|r)esults: header field$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ opendkim\[[[:digit:]]+\]: [[:alnum:]]+: key retrieval failed \(s=dkim, d=[^ ]+\)$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ opendkim\[[[:digit:]]+\]: [[:alnum:]]+: key retrieval failed \(s=default, d=[^ ]+\): '[^']+' record not found$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ opendkim\[[[:digit:]]+\]: [[:alnum:]]+: s=[._[:alnum:]-]+ d=[._[:alnum:]-]+ SSL error:[[:digit:]]+:rsa routines:INT_RSA_VERIFY:bad signature$
