@@ -1,1 +1,3 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ policyd-spf\[[[:digit:]]+\]: (None|Pass|Softfail|Fail|Neutral|Permerror); .*$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ policyd-spf\[[[:digit:]]+\]: prepend Received-SPF: (None|Pass|Softfail|Fail|Neutral|Permerror) .*$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ policyd-spf\[[[:digit:]]+\]: 550 5\.7\.23 Message rejected due to: SPF fail - not authorized\. Please see [^\s]+$
