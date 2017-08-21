@@ -6,7 +6,7 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ sshd\[[[:digit:]]+\]: User child is on pid [[:digit:]]+$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ sshd\[[[:digit:]]+\]: Changed root directory to ".*"$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ sshd\[[[:digit:]]+\]: Received disconnect from [[:xdigit:].:]{3,39} port [[:digit:]:]+: disconnected by user$
-^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ sshd\[[[:digit:]]+\]: Connection closed by [[:xdigit:].:]{3,39}$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ sshd\[[[:digit:]]+\]: Connection closed by [[:xdigit:].:]{3,39}( port [0-9]+)?$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ sshd\[[[:digit:]]+\]: Transferred: sent [[:digit:]]+, received [[:digit:]]+ bytes$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ sshd\[[[:digit:]]+\]: Closing connection to [[:xdigit:].:]{3,39} port [[:digit:]]+$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ sshd\[[[:digit:]]+\]: Close session: user [[:alnum:]_]+ from [[:xdigit:].:]{3,39} port [[:digit:]]+ id [[:digit:]]+$
