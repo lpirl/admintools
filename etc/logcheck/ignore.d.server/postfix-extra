@@ -13,8 +13,9 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ postfix\/anvil\[[[:digit:]]+\]: statistics: max connection rate [[:digit:]]+\/[[:digit:]]+s for \([[:digit:]]+:[[:xdigit:].:]{3,39}\) at \w{3} [ :[:digit:]]{11}
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ postfix\/anvil\[[[:digit:]]+\]: statistics: max connection count [[:digit:]]+ for \([[:digit:]]+:[[:xdigit:].:]{3,39}\) at \w{3} [ :[:digit:]]{11}
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ postfix\/smtp\[[[:digit:]]+\]: warning: TLS library problem: error:1408F10B:SSL routines:SSL3_GET_RECORD:wrong version number:s3_pkt\.c:348:$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ postfix\/smtp\[[[:digit:]]+\]: warning: TLS library problem: error:1408F10B:SSL routines:ssl3_get_record:wrong version number:../ssl/record/ssl3_record.c:210:$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ postfix\/smtpd\[[[:digit:]]+\]: warning: TLS library problem: error:14094416:SSL routines:SSL3_READ_BYTES:sslv3 alert certificate unknown:s3_pkt.c:1315:SSL alert number 46:$
-^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ postfix\/smtpd\[[[:digit:]]+\]: warning: TLS library problem: error:14094416:SSL routines:ssl3_read_bytes:sslv3 alert certificate unknown:\.\.\/ssl\/record\/rec_layer_s3.c:1399:SSL alert number 46:$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ postfix\/smtpd\[[[:digit:]]+\]: warning: TLS library problem: error:14094416:SSL routines:ssl3_read_bytes:sslv3 alert certificate unknown:\.\./ssl/record/rec_layer_s3.c:1399:SSL alert number 46:$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ postfix\/smtpd\[[[:digit:]]+\]: warning: TLS library problem: error:1417D18C:SSL routines:tls_process_client_hello:version too low:\.\.\/ssl\/statem\/statem_srvr\.c:974:$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ postfix\/smtp\[[[:digit:]]+\]: [A-Z0-9]+: Cannot start TLS: handshake failure$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ postfix\/smtp\[[[:digit:]]+\]: SSL_connect error to [^[:space:]]+: -1$
