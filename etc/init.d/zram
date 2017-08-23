@@ -14,7 +14,7 @@
 # Distributed under the GPL version 3 or above, see terms at
 #      https://gnu.org/licenses/gpl-3.0.txt
 
-FRACTION=50
+FRACTION=80
 
 MEMORY=`perl -ne'/^MemTotal:\s+(\d+)/ && print $1*1024;' < /proc/meminfo`
 CPUS=`nproc`
