@@ -1,0 +1,11 @@
+[Unit]
+Description=enable zram
+
+[Service]
+Type=oneshot
+ExecStart=/opt/admintools/etc/init.d/zram start
+ExecStop=/opt/admintools/etc/init.d/zram stop
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
