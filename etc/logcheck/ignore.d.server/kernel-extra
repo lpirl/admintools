@@ -5,4 +5,4 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:]. ]+\] \[drm:drm_edid_block_valid \[drm\]\] \*ERROR\* EDID checksum is invalid, remainder is [[:digit:]]+$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:]. ]+\] EDID block is all zeroes$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:]. ]+\] nouveau [.:[:digit:]]+: HDMI-[A-Z]+-[[:digit:]]+: EDID block [[:digit:]]+ invalid\.$
-^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:]. ]+\] nouveau [.:[:digit:]]+: DRM: [^\n]+$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:]. ]+\] nouveau [.:[:digit:]]+: DRM: .*$
