@@ -1,0 +1,2 @@
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ /usr/bin/x2gosetkeyboard: Setting X keyboard according to .*$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ /usr/bin/x2gomountdirs\[[0-9]+\]: successfully mounted .*$
