@@ -6,7 +6,7 @@ Replace this with your description.
 """
 
 import argparse
-from logging import getLogger, DEBUG, INFO, debug, info
+from logging import getLogger, DEBUG, INFO, debug, info, error
 from subprocess import check_output
 
 
