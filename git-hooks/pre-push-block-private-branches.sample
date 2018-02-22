@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Prevents private branches (matching "$block_pattern", see below) from
+# being pushed.
+
+block_pattern="^private-*"
+
+if git rev-parse --abbrev-ref HEAD | egrep -q "$block_pattern"
+then
+  echo "$0: Branch name matches pattern '$block_pattern'. Push blocked."
+  exit 1
+fi
