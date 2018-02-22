@@ -1,0 +1,8 @@
+A structure that allows to specify any number of executable files per hook.
+
+It does so by calling all executable files, who's name start with the
+name of the hook and do not end with `.sample`.
+
+E.g., when the "pre-push" hook is triggered, the hypothetical executable
+file `pre-push-setup-vpn` would be called, whereas `pre-push-template.sample`
+would not.

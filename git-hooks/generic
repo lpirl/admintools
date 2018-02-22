@@ -1,0 +1,8 @@
+#!/bin/bash
+
+hooks_dir="$(dirname $0)"
+hook="$(basename $0)"
+
+find $hooks_dir -maxdepth 1 -executable -type f \
+  -not -name '*.sample' -name "${hook}*" \
+  -exec {} "$@" \;
