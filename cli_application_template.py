@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/bin/sh
+''':'
+exec python3 -OO "$0" "$@"
+'''
+# The above is a little hack to use arguments in the shebang.
 
 """
 This is a template for simple Python 3 CLI applications.
