@@ -25,14 +25,16 @@ Put a call to this script in your crontab to create backups regularly,
 import sys
 import argparse
 from logging import DEBUG, INFO, ERROR, getLogger, info, debug, error
-from os import rmdir, sync, umask, remove
-from os.path import basename, join, sep as path_sep
+from os import rmdir, sync, umask, mkdir
+from os.path import basename, join, sep as path_sep, exists, isdir
 from subprocess import (run as subprocess_run, DEVNULL, PIPE,
                         CalledProcessError)
-from tempfile import mkstemp, mkdtemp
+from tempfile import mkdtemp
 from re import sub, search
 from fileinput import FileInput
 from shlex import split as shsplit
+
+
 
 RSYNC_OPTS = (
   "--archive",
@@ -58,8 +60,7 @@ CRYPTSETUP_PATH_TEMPLATE = "/dev/mapper/%s"
 CRYPTSETUP_NAME = "cryptroot"
 DEVICE_BY_UUID_TEMPLATE = "/dev/disk/by-uuid/%s"
 
-TEMPFILE_DELIM = "__"
-TEMPFILE_PREFIX = basename(sys.argv[0]) + TEMPFILE_DELIM
+TEMPDIR_PREFIX = basename(sys.argv[0]) + "_"
 
 
 
@@ -197,12 +198,11 @@ class FileSystem(object):
     if not password:
       error("Please specify either a password or a password file!")
       exit(4)
-    self.cleaner.add_job(umask, umask(0o177))
-    self.password_file = mkstemp(prefix=TEMPFILE_PREFIX,
-                                 suffix=TEMPFILE_DELIM + "password")[1]
-    # restore the system's default umask right away:
-    self.cleaner.do_one_job()
-    self.cleaner.add_job(remove, self.password_file)
+
+    old_umask = umask(0o177)
+    self.password_file = make_tempfile(self.cleaner, "password")
+    umask(old_umask)
+
     debug("writing password temporarily to '%s'", self.password_file)
     with open(self.password_file, "w") as password_filep:
       password_filep.write(password)
@@ -224,15 +224,13 @@ class FileSystem(object):
       raise cryptsetup_exception
     else:
       self.cleaner.add_job(
-        run, ("cryptsetup", "luksClose", self.uuid_on_partition)
+        run, ("cryptsetup", "close", "--deferred", self.uuid_on_partition)
       )
 
   def _mount(self):
 
     debug("creating temporary directory to mount: %s", self.filesystem_uuid)
-    self.mountpoint = mkdtemp(prefix=TEMPFILE_PREFIX,
-                              suffix=TEMPFILE_DELIM + "mount")
-    self.cleaner.add_job(rmdir, self.mountpoint)
+    self.mountpoint = make_tempdir(self.cleaner, "mount")
     info("mounting '%s' to '%s'", self.filesystem_uuid, self.mountpoint)
     mount_args = ["mount"]
     if self.mount_options:
@@ -241,7 +239,7 @@ class FileSystem(object):
     mount_args.append("UUID=%s" % self.filesystem_uuid)
     mount_args.append(self.mountpoint)
     run(mount_args)
-    self.cleaner.add_job(run, ("umount", self.mountpoint))
+    self.cleaner.add_job(run, ("umount", "--lazy", self.mountpoint))
 
   def path(self, *bits):
     """
@@ -285,6 +283,8 @@ class FileSystem(object):
     """
     assert self.chroot_prepared
     run(("chroot", self.mountpoint) + call_args, *args, **kwargs)
+
+
 
 def run(call_args, *args, **kwargs):
 
@@ -469,7 +469,34 @@ def ensure_bootable_flag(dest_fs):
 
 
 
-def main(cleaner):
+TEMPDIR_ROOT = None # to be set by ``make_tempdir_root``
+def make_tempdir_root(cleaner):
+  global TEMPDIR_ROOT
+  assert TEMPDIR_ROOT is None
+  TEMPDIR_ROOT = mkdtemp(prefix=TEMPDIR_PREFIX)
+  cleaner.add_job(rmdir, TEMPDIR_ROOT)
+
+
+
+def make_tempdir(cleaner, name):
+  dirname = join(TEMPDIR_ROOT, name)
+  assert not isdir(dirname)
+  mkdir(dirname)
+  cleaner.add_job(rmdir, dirname)
+  return dirname
+
+
+
+def make_tempfile(cleaner, name):
+  filename = join(TEMPDIR_ROOT, name)
+  assert not exists(filename)
+  open(filename, 'a').close()
+  cleaner.add_job(rmdir, filename)
+  return filename
+
+
+
+def cleaned_main(cleaner):
   parser = argparse.ArgumentParser(
     description="Creates a bootable copy of the current file system root (/)."
   )
@@ -518,6 +545,8 @@ def main(cleaner):
   # last job (i.e. first job submitted) is always to sync disks
   cleaner.add_job(sync)
 
+  make_tempdir_root(cleaner)
+
   src_fs = FileSystem(cleaner, mountpoint="/")
   dest_fs = FileSystem(cleaner, uuid=cli_args.dest_uuid,
                        password=cli_args.password,
@@ -545,12 +574,13 @@ def main(cleaner):
   else:
     info("Grub already installed on %s", dest_fs.device_path)
 
-if __name__ == '__main__':
 
+
+def main():
   cleaner = Cleaner()
   abnormal_termination = False
   try:
-    main(cleaner)
+    cleaned_main(cleaner)
   except Exception as exception:
     error("abnormal termination (see error at end of output)")
     abnormal_termination = True
@@ -563,3 +593,8 @@ if __name__ == '__main__':
     exit(1)
   else:
     info("success - please verify your backup (!)")
+
+
+
+if __name__ == '__main__':
+  main()
