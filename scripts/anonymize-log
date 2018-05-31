@@ -19,8 +19,9 @@ from logging import getLogger, DEBUG, INFO, debug, info, error
 from abc import ABCMeta, abstractmethod
 from sys import stdin, stdout
 from re import compile as compile_re, IGNORECASE
-from tempfile import NamedTemporaryFile
-from shutil import move
+from tempfile import mkstemp
+from shutil import copy
+from os import remove
 
 
 
@@ -221,23 +222,27 @@ def caught_main(cleaner):
 
   debug('open input file "%s"', args.in_file)
   if args.in_file == '-':
-    if args.inplace:
-      error('Cannot modify stdin --inplace.')
-      exit(1)
     in_file = stdin
   else:
     in_file = open(args.in_file, 'r')
   cleaner.add_job(in_file.close)
 
-  debug('open output file "%s"',
-        '<temporary>' if args.inplace else args.out_file)
   if args.inplace:
-    out_file = NamedTemporaryFile('a', delete=False)
-  elif args.out_file == '-':
+    debug('create temporary file for in-place mode')
+    out_file, args.out_file = mkstemp()
+    cleaner.add_job(remove, args.out_file)
+
+  debug('open output file "%s"' % args.out_file)
+  if args.out_file == '-':
     out_file = stdout
   else:
     out_file = open(args.out_file, 'a')
   cleaner.add_job(out_file.close)
+
+  debug('doing argument sanity checks')
+  if args.inplace and in_file == stdin:
+    error('Cannot modify stdin --inplace.')
+    exit(1)
 
   info('processing lines')
   for line in in_file:
@@ -245,9 +250,12 @@ def caught_main(cleaner):
       line = processor.process(line)
     out_file.write(line)
 
-  if args.inplace:
+  cleaner.do_one_job() # closes out_file
+
+  if args.inplace and in_file != stdin:
+    assert out_file != stdout
     info('replacing input file')
-    move(out_file.name, in_file.name)
+    copy(out_file.name, in_file.name)
 
   info('all done')
 
