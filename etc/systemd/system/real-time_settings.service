@@ -3,8 +3,8 @@ Description=enable real-time settings for audio applications
 
 [Service]
 Type=oneshot
-ExecStart=/opt/admintools/real-time_settings.py on
-ExecStop=/opt/admintools/real-time_settings.py off
+ExecStart=/opt/admintools/scripts/real-time-settings on
+ExecStop=/opt/admintools/scripts/real-time-settings off
 RemainAfterExit=yes
 
 [Install]
