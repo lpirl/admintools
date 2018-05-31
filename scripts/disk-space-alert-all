@@ -21,4 +21,4 @@ then
 fi
 
 df -h | grep '^/dev' | cut -d" " -f1 | sort -u | \
-	xargs -I{} -P$(nproc) ./disk_space_alert.sh {} $1
+	xargs -I{} -P$(nproc) ./disk-space-alert {} $1
