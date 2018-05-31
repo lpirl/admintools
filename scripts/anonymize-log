@@ -19,6 +19,9 @@ from logging import getLogger, DEBUG, INFO, debug, info, error
 from abc import ABCMeta, abstractmethod
 from sys import stdin, stdout
 from re import compile as compile_re, IGNORECASE
+from tempfile import NamedTemporaryFile
+from shutil import move
+
 
 
 class Cleaner(object):
@@ -191,6 +194,8 @@ def caught_main(cleaner):
                       help='turn on debug messages')
   parser.add_argument('-v', '--verbose', action='store_true', default=False,
                       help='turn on verbose messages')
+  parser.add_argument('--inplace', action='store_true', default=False,
+                      help='replace input file (out_file will be ignored)')
   parser.add_argument('in_file', nargs='?', default='-',
                       help='file to read from, stdin: -')
   parser.add_argument('out_file', nargs='?', default='-',
@@ -214,25 +219,35 @@ def caught_main(cleaner):
     debug('setting up %s', processor)
     processor.setup(args)
 
-  debug('open file "%s" for reading', args.in_file)
+  debug('open input file "%s"', args.in_file)
   if args.in_file == '-':
+    if args.inplace:
+      error('Cannot modify stdin --inplace.')
+      exit(1)
     in_file = stdin
   else:
     in_file = open(args.in_file, 'r')
-    cleaner.add_job(in_file.close)
+  cleaner.add_job(in_file.close)
 
-  debug('open file "%s" for writing', args.out_file)
-  if args.out_file == '-':
+  debug('open output file "%s"',
+        '<temporary>' if args.inplace else args.out_file)
+  if args.inplace:
+    out_file = NamedTemporaryFile('a', delete=False)
+  elif args.out_file == '-':
     out_file = stdout
   else:
     out_file = open(args.out_file, 'a')
-    cleaner.add_job(out_file.close)
+  cleaner.add_job(out_file.close)
 
   info('processing lines')
   for line in in_file:
     for processor in processors:
       line = processor.process(line)
     out_file.write(line)
+
+  if args.inplace:
+    info('replacing input file')
+    move(out_file.name, in_file.name)
 
   info('all done')
 
