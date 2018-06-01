@@ -21,7 +21,7 @@ from sys import stdin, stdout
 from re import compile as compile_re, IGNORECASE
 from tempfile import mkstemp
 from shutil import copy
-from os import remove
+from os import remove, fdopen
 
 
 
@@ -224,7 +224,7 @@ def caught_main(cleaner):
   if args.in_file == '-':
     in_file = stdin
   else:
-    in_file = open(args.in_file, 'r')
+    in_file = open(args.in_file, 'rb')
   cleaner.add_job(in_file.close)
 
   if args.inplace:
@@ -234,9 +234,9 @@ def caught_main(cleaner):
 
   debug('open output file "%s"' % args.out_file)
   if args.out_file == '-':
-    out_file = stdout
+    out_file = fdopen(stdout.fileno(), 'bw')
   else:
-    out_file = open(args.out_file, 'a')
+    out_file = open(args.out_file, 'bw')
   cleaner.add_job(out_file.close)
 
   debug('doing argument sanity checks')
@@ -246,9 +246,20 @@ def caught_main(cleaner):
 
   info('processing lines')
   for line in in_file:
-    for processor in processors:
-      line = processor.process(line)
-    out_file.write(line)
+    try:
+      decoded_line = line.decode()
+    except UnicodeDecodeError:
+      debug('could not decode a bytes from input; '
+            'assuming input is binary; '
+            'passing through rest of input')
+      out_file.write(line)
+      for pass_through_line in in_file:
+        out_file.write(pass_through_line)
+      break
+    else:
+      for processor in processors:
+        decoded_line = processor.process(decoded_line)
+      out_file.write(decoded_line.encode())
 
   cleaner.do_one_job() # closes out_file
 
