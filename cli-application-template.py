@@ -44,33 +44,6 @@ class Cleaner(object):
 
 
 
-def main():
-  '''
-  Wrapper around actual main procedure.
-
-  Will hold back uncaught exceptions of the (actual) main procedure,
-  will run clean up jobs, and will raise the held exception afterwards.
-  '''
-
-  cleaner = Cleaner()
-  abnormal_termination = False
-  try:
-    caught_main(cleaner)
-  except Exception as exception:
-    error("abnormal termination (see error at end of output)")
-    abnormal_termination = True
-    raise exception
-  finally:
-    debug("running cleanup jobs")
-    cleaner.do_all_jobs()
-
-  if abnormal_termination:
-    exit(1)
-  else:
-    debug("success - bye")
-
-
-
 def caught_main(cleaner):
   '''
   Actual main procedure.
@@ -107,6 +80,35 @@ def caught_main(cleaner):
 
   output = check_output(("echo", "Hello World"), universal_newlines=True)
   print(output.strip())
+
+
+
+def main():
+  '''
+  Wrapper around actual main procedure.
+
+  Will hold back uncaught exceptions of the (actual) main procedure,
+  will run clean up jobs, and will raise the held exception afterwards.
+  '''
+
+  cleaner = Cleaner()
+  abnormal_termination = False
+  try:
+    caught_main(cleaner)
+  except Exception as exception:
+    error("abnormal termination (see error at end of output)")
+    abnormal_termination = True
+    raise exception
+  finally:
+    debug("running cleanup jobs")
+    cleaner.do_all_jobs()
+
+  if abnormal_termination:
+    exit(1)
+  else:
+    debug("success - bye")
+
+
 
 if __name__ == '__main__':
   main()
