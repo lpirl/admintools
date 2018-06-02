@@ -202,32 +202,62 @@ class EmailProcessor(LineProcessorBase):
 
 
 
-def main():
+def process_lines(in_file, out_file, processors):
   '''
-  Wrapper around actual main procedure.
-
-  Will hold back uncaught exceptions of the (actual) main procedure,
-  will run clean up jobs, and will raise the held exception afterwards.
+  processes all lines with ``processors``,
+  reads from ``in_file``, writes to ``out_file``
   '''
 
-  cleaner = Cleaner()
-  abnormal_termination = False
-  try:
-    caught_main(cleaner)
-  except Exception as exception:
-    error("abnormal termination (see error at end of output)")
-    abnormal_termination = True
-    raise exception
-  finally:
-    debug("running cleanup jobs")
-    cleaner.do_all_jobs()
+  info('processing lines')
+  for line in in_file:
+    try:
+      decoded_line = line.decode()
+    except UnicodeDecodeError:
+      debug('could not decode byte from input; '
+            'assuming input is binary; '
+            'passing through rest of input')
+      out_file.write(line)
+      for pass_through_line in in_file:
+        out_file.write(pass_through_line)
+      break
+    else:
+      for processor in processors:
+        decoded_line = processor.process(decoded_line)
+      out_file.write(decoded_line.encode())
 
-  if abnormal_termination:
-    exit(1)
+
+
+def get_in_file(args, cleaner):
+  ''' returns the input file according to ``args`` '''
+
+  debug('open input file "%s"', args.in_file)
+  if args.in_file == '-':
+    in_file = fdopen(stdin.fileno(), 'rb')
   else:
-    debug("success - bye")
+    in_file = open(args.in_file, 'rb')
+
+  cleaner.add_job(in_file.close)
+  return in_file
 
 
+
+def get_out_file(args, cleaner):
+  ''' returns the output file according to ``args`` '''
+
+  if args.inplace:
+    debug('create temporary file for in-place mode')
+    out_file, args.out_file = mkstemp()
+    cleaner.add_job(remove, args.out_file)
+
+  debug('open output file "%s"' % args.out_file)
+
+  if args.out_file == '-':
+    out_file = fdopen(stdout.fileno(), 'wb')
+  else:
+    out_file = open(args.out_file, 'wb')
+
+  cleaner.add_job(out_file.close)
+  return out_file
 
 def caught_main(cleaner):
   '''
@@ -270,46 +300,15 @@ def caught_main(cleaner):
     debug('setting up %s', processor)
     processor.setup(args)
 
-  debug('open input file "%s"', args.in_file)
-  if args.in_file == '-':
-    in_file = fdopen(stdin.fileno(), 'rb')
-  else:
-    in_file = open(args.in_file, 'rb')
-  cleaner.add_job(in_file.close)
-
-  if args.inplace:
-    debug('create temporary file for in-place mode')
-    out_file, args.out_file = mkstemp()
-    cleaner.add_job(remove, args.out_file)
-
-  debug('open output file "%s"' % args.out_file)
-  if args.out_file == '-':
-    out_file = fdopen(stdout.fileno(), 'wb')
-  else:
-    out_file = open(args.out_file, 'wb')
-  cleaner.add_job(out_file.close)
+  in_file = get_in_file(args, cleaner)
+  out_file = get_out_file(args, cleaner)
 
   debug('doing argument sanity checks')
   if args.inplace and in_file == stdin:
     error('Cannot modify stdin --inplace.')
     exit(1)
 
-  info('processing lines')
-  for line in in_file:
-    try:
-      decoded_line = line.decode()
-    except UnicodeDecodeError:
-      debug('could not decode byte from input; '
-            'assuming input is binary; '
-            'passing through rest of input')
-      out_file.write(line)
-      for pass_through_line in in_file:
-        out_file.write(pass_through_line)
-      break
-    else:
-      for processor in processors:
-        decoded_line = processor.process(decoded_line)
-      out_file.write(decoded_line.encode())
+  process_lines(in_file, out_file, processors)
 
   cleaner.do_one_job() # closes out_file
 
@@ -319,6 +318,35 @@ def caught_main(cleaner):
     copy(out_file.name, in_file.name)
 
   info('all done')
+
+
+
+def main():
+  '''
+  Wrapper around actual main procedure.
+
+  Will hold back uncaught exceptions of the (actual) main procedure,
+  will run clean up jobs, and will raise the held exception afterwards.
+  '''
+
+  cleaner = Cleaner()
+  abnormal_termination = False
+  try:
+    caught_main(cleaner)
+  except Exception as exception:
+    error("abnormal termination (see error at end of output)")
+    abnormal_termination = True
+    raise exception
+  finally:
+    debug("running cleanup jobs")
+    cleaner.do_all_jobs()
+
+  if abnormal_termination:
+    exit(1)
+  else:
+    debug("success - bye")
+
+
 
 if __name__ == '__main__':
   main()
