@@ -6,9 +6,20 @@ exec python3 -OO "$0" "$@"
 
 __doc__ = '''\
 This script is intended to anonymize log files.
+
 Currently, IPv4, IPv6 and email addresses are considered.
 False positives are more tolerable than false negatives.
 Effectiveness over efficiency.
+
+If you want to anonymize your logs with logrotate, you can place the
+following lines in, e.g.,
+``/etc/logrotate.d/000-anonymize-before-compression``:
+``compress``,
+``compresscmd /bin/sh``,
+``compressoptions -c '/where/ever/anonymize-log | gzip'``.
+
+This can, e.g., be useful to fulfill the General Data Protection
+Regulation (GDPR, German: DSGVO).
 '''
 
 
