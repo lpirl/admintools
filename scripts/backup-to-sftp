@@ -75,6 +75,7 @@ DRY_RUN=0												# -d
 VERBOSE=0												# -v
 STDOUT=/dev/null
 RSYNC_OPTS=""
+USER_RSYNC_OPTS=""
 
 while getopts "h?u:p:b:s:o:cdnv" opt; do
 	case "$opt" in
@@ -115,7 +116,7 @@ while getopts "h?u:p:b:s:o:cdnv" opt; do
 		HISTORY_DIR=$OPTARG
 		RSYNC_OPTS="--backup --backup-dir=$HISTORY_DIR"
 		;;
-	o)	RSYNC_OPTS+=" $OPTARG "
+	o)	USER_RSYNC_OPTS+=" $OPTARG "
 		;;
 	c)	CLEAN_HISTORY_DIR=1
 		;;
@@ -231,6 +232,9 @@ RSYNC_OPTS+=' --group'
 RSYNC_OPTS+=' --owner'
 RSYNC_OPTS+=' --devices'
 RSYNC_OPTS+=' --specials'
+
+# finally, add the user-provided rsync options, so they have precedence
+RSYNC_OPTS+=" $USER_RSYNC_OPTS"
 
 if [ "$(uname -o)" != "Cygwin" ]
 then
