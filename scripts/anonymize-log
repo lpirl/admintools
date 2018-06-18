@@ -113,7 +113,7 @@ class AnonymizerBase(object, metaclass=ABCMeta):
 
 @AnonymizerRegistry.register
 class Ipv4Anonymizer(AnonymizerBase):
-  ''' anonymizes IPv4 addresses by masking out parts '''
+  ''' anonymizes IPv4 addresses by truncating rightmost parts '''
 
   # thanks to https://stackoverflow.com/a/106223 (adapted)
   REGEXP = (
@@ -171,7 +171,7 @@ class Ipv4Anonymizer(AnonymizerBase):
 @AnonymizerRegistry.register
 class Ipv6Anonymizer(AnonymizerBase):
   '''
-  anonymizes IPv6 addresses by replacing the right-most parts of address by mask
+  anonymizes IPv6 addresses by truncating rightmost parts
   '''
 
   # thanks to https://gist.github.com/dfee/6ed3a4b05cfe7a6faf40a2102408d5d8
