@@ -126,7 +126,7 @@ class Ipv4Processor(LineProcessorBase):
     for match in self.pattern.finditer(line):
       matched_string = match.group(0)
       left_octets, _ = matched_string.rsplit('.', 1)
-      replace_string = '%s.0' % left_octets
+      replace_string = '%s.x' % left_octets
       line = line.replace(matched_string, replace_string, 1)
 
     return line
@@ -157,7 +157,7 @@ class Ipv6Processor(LineProcessorBase):
 
       for segment_i, segment in enumerate(reversed(segments)):
         if segment != '':
-          segments[-1 - segment_i] = '0'
+          segments[-1 - segment_i] = 'x'
           break
 
       replace_string = ':'.join(segments)
