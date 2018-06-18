@@ -65,18 +65,23 @@ class Cleaner(object):
 
 
 
-class LineProcessorRegistry(object, metaclass=ABCMeta):
+class AnonymizerRegistry(object, metaclass=ABCMeta):
   '''
-  Concrete subclasses of ``LineProcessorBase`` register at this class.
+  Concrete subclasses of ``AnonymizerBase`` register at this class.
   '''
   items = set()
   register = items.add
 
 
 
-class LineProcessorBase(object, metaclass=ABCMeta):
+class AnonymizerBase(object, metaclass=ABCMeta):
   '''
-  A common base class for all line processors.
+  A common base class for all anonymizers.
+
+  An anonymizer anonymizes specific aspects in strings, e.g.,
+  email addresses.
+  Usually, it is being fed with the lines of a log file, one by one,
+  and returns the respective anonymized line.
   '''
 
   def __init__(self, _):
@@ -86,28 +91,28 @@ class LineProcessorBase(object, metaclass=ABCMeta):
     super().__init__()
 
   def setup(self, parsed_args):
-    ''' called once prior checks (i.e. calls to ``process``) '''
+    ''' called once prior checks (i.e. calls to ``anonymize``) '''
     pass
 
   @abstractmethod
-  def process(self, line):
+  def anonymize(self, line):
     '''
-    returns processed ``line``
+    returns anonymized ``line``
 
     A general note on regular expressions: measurements (cPython 3)
     showed that it is generally cheaper to match with non-capturing
     regular expressions although the matches have to be processed another
-    time afterwards. (Probably because the matching is way more often
+    time afterwards. (Likely because the matching is way more often
     performed than anonymization.)
     '''
     pass
 
   def __repr__(self):
-    """ returns human readable name for a processor """
+    """ returns human readable name for an anonymizer """
     return '%s %s' % (self.__class__.__name__, hex(id(self)))
 
-@LineProcessorRegistry.register
-class Ipv4Processor(LineProcessorBase):
+@AnonymizerRegistry.register
+class Ipv4Anonymizer(AnonymizerBase):
   ''' anonymizes IPv4 addresses by replacing the last octet with 'x' '''
 
   # thanks to https://stackoverflow.com/a/106223 (adapted)
@@ -123,8 +128,8 @@ class Ipv4Processor(LineProcessorBase):
     super().__init__(argparser)
     self.pattern = compile_re(self.__class__.REGEXP)
 
-  def process(self, line):
-    ''' returns processed ``line`` '''
+  def anonymize(self, line):
+    ''' returns anonymized ``line`` '''
     for match in self.pattern.finditer(line):
       matched_string = match.group(0)
       left_octets, _ = matched_string.rsplit('.', 1)
@@ -135,8 +140,8 @@ class Ipv4Processor(LineProcessorBase):
 
 
 
-@LineProcessorRegistry.register
-class Ipv6Processor(LineProcessorBase):
+@AnonymizerRegistry.register
+class Ipv6Anonymizer(AnonymizerBase):
   '''
   anonymizes IPv6 addresses by replacing the right-most non-empty hextet
   with 'x'
@@ -150,8 +155,8 @@ class Ipv6Processor(LineProcessorBase):
     super().__init__(argparser)
     self.pattern = compile_re(self.__class__.REGEXP, IGNORECASE)
 
-  def process(self, line):
-    ''' see base class' documentation on ``process`` '''
+  def anonymize(self, line):
+    ''' see base class' documentation on ``anonymize`` '''
 
     for match in self.pattern.finditer(line):
       matched_string = match.group(0)
@@ -169,8 +174,8 @@ class Ipv6Processor(LineProcessorBase):
 
 
 
-@LineProcessorRegistry.register
-class EmailProcessor(LineProcessorBase):
+@AnonymizerRegistry.register
+class EmailAnonymizer(AnonymizerBase):
   '''
   anonymizes email addresses by replacing at least 50% of the characters
   in the local part and in the domain part
@@ -201,8 +206,8 @@ class EmailProcessor(LineProcessorBase):
     super().__init__(args)
     self.pattern = compile_re(self.__class__.REGEXP, IGNORECASE)
 
-  def process(self, line):
-    ''' see base class' documentation on ``process`` '''
+  def anonymize(self, line):
+    ''' see base class' documentation on ``anonymize`` '''
 
     for match in self.pattern.finditer(line):
       matched_string = match.group(0)
@@ -216,9 +221,9 @@ class EmailProcessor(LineProcessorBase):
 
 
 
-def process_lines(in_file, out_file, processors):
+def anonymize_lines(in_file, out_file, anonymizers):
   '''
-  processes all lines with ``processors``,
+  processes all lines with ``anonymizers``,
   reads from ``in_file``, writes to ``out_file``
   '''
 
@@ -235,8 +240,8 @@ def process_lines(in_file, out_file, processors):
         out_file.write(pass_through_line)
       break
     else:
-      for processor in processors:
-        decoded_line = processor.process(decoded_line)
+      for anonymizer in anonymizers:
+        decoded_line = anonymizer.anonymize(decoded_line)
       out_file.write(decoded_line.encode())
 
 
@@ -285,6 +290,10 @@ def caught_main(cleaner):
     formatter_class=argparse.ArgumentDefaultsHelpFormatter
   )
 
+  all_anonymizer_class_names = tuple(
+    c.__name__ for c in AnonymizerRegistry.items
+  )
+
   parser.add_argument('-d', '--debug', action='store_true', default=False,
                       help='turn on debug messages')
   parser.add_argument('-v', '--verbose', action='store_true', default=False,
@@ -295,15 +304,14 @@ def caught_main(cleaner):
                       help='file to read from, stdin: -')
   parser.add_argument('out_file', nargs='?', default='-',
                       help='file to write to, stdout: -')
-  parser.add_argument('-m', '--modules',
-                      default=','.join(
-                        p.__name__ for p in LineProcessorRegistry.items
-                      ), help='comma separated list of modules to process')
+  parser.add_argument('-a', '--anonymizers',
+                      default=','.join(all_anonymizer_class_names),
+                      help='comma separated list of anonymizers to enable')
 
 
-  # initialize processors
-  processors = set(Processor(parser)
-                   for Processor in LineProcessorRegistry.items)
+  # initialize anonymizers
+  anonymizers = set(anonymizer(parser)
+                    for anonymizer in AnonymizerRegistry.items)
   args = parser.parse_args()
 
   # set up logger
@@ -314,16 +322,26 @@ def caught_main(cleaner):
   if args.verbose:
     logger.setLevel(INFO)
 
-  debug('removing modules/processors not requested to run')
-  modules_from_args = args.modules.split(',')
-  processors = set(p for p in processors
-                   if p.__class__.__name__ in modules_from_args)
-  debug('processors remaining: %s', ', '.join(str(p) for p in processors))
+  debug('checking if anonymizers requested actually exist')
+  anonymizers_from_args = set(args.anonymizers.split(','))
+  anonymizers_from_registry = set(a.__class__.__name__
+                                  for a in anonymizers)
+  unknown_anonymizers = anonymizers_from_args - anonymizers_from_registry
+  if unknown_anonymizers:
+    error('Anonymizers unknown: %s\nPick any of: %s',
+          ', '.join(unknown_anonymizers),
+          ', '.join(anonymizers_from_registry))
+    exit(2)
 
-  debug('setting up processors')
-  for processor in processors:
-    debug('setting up %s', processor)
-    processor.setup(args)
+  debug('removing anonymizers not requested to run')
+  anonymizers = set(a for a in anonymizers
+                   if a.__class__.__name__ in anonymizers_from_args)
+  debug('anonymizers remaining: %s', ', '.join(str(a) for a in anonymizers))
+
+  debug('setting up anonymizers')
+  for anonymizer in anonymizers:
+    debug('setting up %s', anonymizer)
+    anonymizer.setup(args)
 
   in_file = get_in_file(args, cleaner)
   out_file = get_out_file(args, cleaner)
@@ -333,7 +351,7 @@ def caught_main(cleaner):
     error('Cannot modify stdin --inplace.')
     exit(1)
 
-  process_lines(in_file, out_file, processors)
+  anonymize_lines(in_file, out_file, anonymizers)
 
   cleaner.do_one_job() # closes out_file
 
