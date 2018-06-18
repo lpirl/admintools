@@ -335,7 +335,7 @@ def caught_main(cleaner):
 
   debug('removing anonymizers not requested to run')
   anonymizers = set(a for a in anonymizers
-                   if a.__class__.__name__ in anonymizers_from_args)
+                    if a.__class__.__name__ in anonymizers_from_args)
   debug('anonymizers remaining: %s', ', '.join(str(a) for a in anonymizers))
 
   debug('setting up anonymizers')
