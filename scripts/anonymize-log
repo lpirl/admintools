@@ -169,13 +169,13 @@ class Ipv4Anonymizer(AnonymizerBase):
                            help=('truncate rightmost N bits of '
                                  'IPv4 addresses, 1 <= N <= 32'),
                            choices=range(1, 33))
-    self.pattern = compile_re(self.__class__.REGEXP)
     self.mask = None
 
   def setup(self, parsed_args):
-    '''
-    set bitmask of lower parts to be truncated from ip address
-    '''
+    ''' see base class' documentation on ``setup`` '''
+
+    self.pattern = compile_re(self.__class__.REGEXP)
+
     debug("%s will truncate %d rightmost bits",
           self.__class__.__name__, parsed_args.ipv4mask)
     self.mask = self.FULL_MASK << parsed_args.ipv4mask
@@ -242,13 +242,13 @@ class Ipv6Anonymizer(AnonymizerBase):
                            help=('truncate rightmost N bits of '
                                  'IPv6 addresses1 <= N <= 128'),
                            choices=range(1, 129))
-    self.pattern = compile_re(self.__class__.REGEXP, IGNORECASE)
     self.mask = None
 
   def setup(self, parsed_args):
-    '''
-    set bitmask of lower parts to be truncated from ip address
-    '''
+    ''' see base class' documentation on ``setup`` '''
+
+    self.pattern = compile_re(self.__class__.REGEXP, IGNORECASE)
+
     debug("%s will truncate %d rightmost bits",
           self.__class__.__name__, parsed_args.ipv6mask)
     self.mask = self.FULL_MASK << parsed_args.ipv6mask
@@ -294,9 +294,9 @@ class EmailAnonymizer(AnonymizerBase):
       return '...' + string[-char_count_to_keep:]
     return string[:char_count_to_keep] + '...'
 
-  def __init__(self, args):
-    ''' see base class' documentation on ``__init__`` '''
-    super().__init__(args)
+  def setup(self, parsed_args):
+    ''' see base class' documentation on ``setup`` '''
+
     self.pattern = compile_re(self.__class__.REGEXP, IGNORECASE)
 
   def anonymize(self, line):
