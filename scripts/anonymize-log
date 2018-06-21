@@ -115,6 +115,29 @@ class AnonymizerBase(object, metaclass=ABCMeta):
 class Ipv4Anonymizer(AnonymizerBase):
   ''' anonymizes IPv4 addresses by zeroing the rightmost bits '''
 
+  @staticmethod
+  def unpack4(ipv4_address):
+    '''
+    Takes an ``ipv4_address as string and returns the corresponding
+    integer.
+    '''
+    try:
+      pton = inet_pton(AF_INET, ipv4_address)
+    except OSError:
+      error('Could not unpack a string, which we identified as IPv4 '
+            'address. The operating system says it\'s invalid: %s'
+            '– falling back to 0.0.0.0', ipv4_address)
+      pton = inet_pton(AF_INET, '0.0.0.0')
+
+    return unpack('!I', pton)[0] # ! = big endian, I = unsigned int
+
+  # ``__func__`` required to bypass ``@staticmethod`` decorator,
+  # so we can use this function for class variables already.
+  # Benchmarks over 500 executions show, that unpacking the full mask
+  # 'dynamically' here does not slow down the execution of script
+  # (Python maybe compiles it statically into the bytecode/pycache).
+  FULL_MASK = unpack4.__func__('255.255.255.255')
+
   # thanks to https://stackoverflow.com/a/106223 (adapted)
   REGEXP = (
     r'(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\.'
@@ -139,8 +162,7 @@ class Ipv4Anonymizer(AnonymizerBase):
     part from https://www.privacyfoundation.ch/de/service/anonip.html
     '''
     debug("%s truncate %d bits" % (self.__class__.__name__, parsed_args.ipv4mask))
-    # (255.255.255.255) << parsed_args.ipv4mask
-    self.mask = 4294967295 << parsed_args.ipv4mask
+    self.mask = self.FULL_MASK << parsed_args.ipv4mask
 
   def anonymize(self, line):
     ''' returns anonymized ``line`` '''
@@ -163,6 +185,25 @@ class Ipv6Anonymizer(AnonymizerBase):
   anonymizes IPv6 addresses by zeroing the rightmost bits
   '''
 
+  @staticmethod
+  def unpack6(ipv6_address):
+    '''
+    Takes an ``ipv6_address as string and returns the corresponding
+    integer.
+    '''
+    try:
+      pton = inet_pton(AF_INET6, ipv6_address)
+    except OSError:
+      error('Could not unpack a string, which we identified as IPv6 '
+            'address. The operating system says it\'s invalid: %s'
+            '– falling back to ::', ipv6_address)
+      pton = inet_pton(AF_INET6, '::')
+
+    return unpack('!QQ', pton)[0] # ! = big endian, Q = unsigned long long
+
+  # see comment over at ``Ipv4Anonymizer.FULL_MASK``
+  FULL_MASK = unpack6.__func__('ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff')
+
   # thanks to https://gist.github.com/dfee/6ed3a4b05cfe7a6faf40a2102408d5d8
   REGEXP = r'(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,4}:[^\s:](?:(?:(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])))|(?:::(?:ffff(?::0{1,4}){0,1}:){0,1}[^\s:](?:(?:(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])))|(?:fe80:(?::(?:(?:[0-9a-fA-F]){1,4})){0,4}%[0-9a-zA-Z]{1,})|(?::(?:(?::(?:(?:[0-9a-fA-F]){1,4})){1,7}|:))|(?:(?:(?:[0-9a-fA-F]){1,4}):(?:(?::(?:(?:[0-9a-fA-F]){1,4})){1,6}))|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,2}(?::(?:(?:[0-9a-fA-F]){1,4})){1,5})|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,3}(?::(?:(?:[0-9a-fA-F]){1,4})){1,4})|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,4}(?::(?:(?:[0-9a-fA-F]){1,4})){1,3})|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,5}(?::(?:(?:[0-9a-fA-F]){1,4})){1,2})|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,6}:(?:(?:[0-9a-fA-F]){1,4}))|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,7}:)|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){7,7}(?:(?:[0-9a-fA-F]){1,4}))'
 
@@ -182,8 +223,7 @@ class Ipv6Anonymizer(AnonymizerBase):
     part from https://www.privacyfoundation.ch/de/service/anonip.html
     '''
     debug("%s truncate %d bits" % (self.__class__.__name__, parsed_args.ipv6mask))
-    # ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff << parsed_args.ipv6mask
-    self.mask = 340282366920938463463374607431768211455 << parsed_args.ipv6mask
+    self.mask = self.FULL_MASK << parsed_args.ipv6mask
 
   def anonymize(self, line):
     ''' see base class' documentation on ``anonymize`` '''
