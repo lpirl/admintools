@@ -20,6 +20,10 @@ following lines in, e.g.,
 
 This can, e.g., be useful to fulfill the General Data Protection
 Regulation (GDPR, German: DSGVO).
+
+The implementation to anonymize the rightmost bits of IP addresses has
+been taken from https://www.privacyfoundation.ch/de/service/anonip.html
+mainly. Big thanks.
 '''
 
 
@@ -34,7 +38,6 @@ from tempfile import mkstemp
 from shutil import copy
 from os import remove, fdopen
 from socket import inet_pton, inet_ntop, AF_INET, AF_INET6
-from struct import unpack, pack
 
 class Cleaner(object):
   '''
@@ -113,12 +116,17 @@ class AnonymizerBase(object, metaclass=ABCMeta):
 
 @AnonymizerRegistry.register
 class Ipv4Anonymizer(AnonymizerBase):
-  ''' anonymizes IPv4 addresses by zeroing the rightmost bits '''
+  '''
+  Anonymizes IPv4 addresses by zeroing the rightmost bits.
+
+  Kudos to https://www.privacyfoundation.ch/de/service/anonip.html,
+  where we took the implementation to zero the rightmost bits from.
+  '''
 
   @staticmethod
-  def unpack4(ipv4_address):
+  def ipv4_address_to_int(ipv4_address):
     '''
-    Takes an ``ipv4_address as string and returns the corresponding
+    Takes an ``ipv4_address`` as string and returns the corresponding
     integer.
     '''
     try:
@@ -129,14 +137,22 @@ class Ipv4Anonymizer(AnonymizerBase):
             '– falling back to 0.0.0.0', ipv4_address)
       pton = inet_pton(AF_INET, '0.0.0.0')
 
-    return unpack('!I', pton)[0] # ! = big endian, I = unsigned int
+    return int.from_bytes(pton, byteorder='big')
+
+  @staticmethod
+  def int_to_ipv4_address(integer):
+    '''
+    Takes an ``integer`` and returns the corresponding IPv4 address.
+    '''
+    ntop = integer.to_bytes(length=4, byteorder='big')
+    return inet_ntop(AF_INET, ntop)
 
   # ``__func__`` required to bypass ``@staticmethod`` decorator,
   # so we can use this function for class variables already.
   # Benchmarks over 500 executions show, that unpacking the full mask
   # 'dynamically' here does not slow down the execution of script
   # (Python maybe compiles it statically into the bytecode/pycache).
-  FULL_MASK = unpack4.__func__('255.255.255.255')
+  FULL_MASK = ipv4_address_to_int.__func__('255.255.255.255')
 
   # thanks to https://stackoverflow.com/a/106223 (adapted)
   REGEXP = (
@@ -159,21 +175,20 @@ class Ipv4Anonymizer(AnonymizerBase):
   def setup(self, parsed_args):
     '''
     set bitmask of lower parts to be truncated from ip address
-    part from https://www.privacyfoundation.ch/de/service/anonip.html
     '''
-    debug("%s truncate %d bits" % (self.__class__.__name__, parsed_args.ipv4mask))
+    debug("%s will truncate %d rightmost bits",
+          self.__class__.__name__, parsed_args.ipv4mask)
     self.mask = self.FULL_MASK << parsed_args.ipv4mask
 
   def anonymize(self, line):
     ''' returns anonymized ``line`` '''
+
     for match in self.pattern.finditer(line):
       matched_string = match.group(0)
-      # https://www.privacyfoundation.ch/de/service/anonip.html (adapted)
-      int_addr = unpack("!I", inet_pton(AF_INET, matched_string))[0]
-      int_masked_addr = int_addr & self.mask
-      str_masked_addr = inet_ntop(AF_INET, pack('!I', int_masked_addr))
-
-      line = line.replace(matched_string, str_masked_addr, 1)
+      address_int = self.ipv4_address_to_int(matched_string)
+      masked_address_int = address_int & self.mask
+      masked_address_str = self.int_to_ipv4_address(masked_address_int)
+      line = line.replace(matched_string, masked_address_str, 1)
 
     return line
 
@@ -182,13 +197,16 @@ class Ipv4Anonymizer(AnonymizerBase):
 @AnonymizerRegistry.register
 class Ipv6Anonymizer(AnonymizerBase):
   '''
-  anonymizes IPv6 addresses by zeroing the rightmost bits
+  Anonymizes IPv6 addresses by zeroing the rightmost bits.
+
+  Kudos to https://www.privacyfoundation.ch/de/service/anonip.html,
+  where we took the implementation to zero the rightmost bits from.
   '''
 
   @staticmethod
-  def unpack6(ipv6_address):
+  def ipv6_address_to_int(ipv6_address):
     '''
-    Takes an ``ipv6_address as string and returns the corresponding
+    Takes an ``ipv6_address`` as string and returns the corresponding
     integer.
     '''
     try:
@@ -199,10 +217,20 @@ class Ipv6Anonymizer(AnonymizerBase):
             '– falling back to ::', ipv6_address)
       pton = inet_pton(AF_INET6, '::')
 
-    return unpack('!QQ', pton)[0] # ! = big endian, Q = unsigned long long
+    return int.from_bytes(pton, byteorder='big')
+
+  @staticmethod
+  def int_to_ipv6_address(integer):
+    '''
+    Takes an ``integer`` and returns the corresponding IPv6 address.
+    '''
+    ntop = integer.to_bytes(length=16, byteorder='big')
+    return inet_ntop(AF_INET6, ntop)
 
   # see comment over at ``Ipv4Anonymizer.FULL_MASK``
-  FULL_MASK = unpack6.__func__('ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff')
+  FULL_MASK = ipv6_address_to_int.__func__(
+    'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
+  )
 
   # thanks to https://gist.github.com/dfee/6ed3a4b05cfe7a6faf40a2102408d5d8
   REGEXP = r'(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,4}:[^\s:](?:(?:(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])))|(?:::(?:ffff(?::0{1,4}){0,1}:){0,1}[^\s:](?:(?:(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])))|(?:fe80:(?::(?:(?:[0-9a-fA-F]){1,4})){0,4}%[0-9a-zA-Z]{1,})|(?::(?:(?::(?:(?:[0-9a-fA-F]){1,4})){1,7}|:))|(?:(?:(?:[0-9a-fA-F]){1,4}):(?:(?::(?:(?:[0-9a-fA-F]){1,4})){1,6}))|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,2}(?::(?:(?:[0-9a-fA-F]){1,4})){1,5})|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,3}(?::(?:(?:[0-9a-fA-F]){1,4})){1,4})|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,4}(?::(?:(?:[0-9a-fA-F]){1,4})){1,3})|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,5}(?::(?:(?:[0-9a-fA-F]){1,4})){1,2})|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,6}:(?:(?:[0-9a-fA-F]){1,4}))|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){1,7}:)|(?:(?:(?:(?:[0-9a-fA-F]){1,4}):){7,7}(?:(?:[0-9a-fA-F]){1,4}))'
@@ -220,9 +248,9 @@ class Ipv6Anonymizer(AnonymizerBase):
   def setup(self, parsed_args):
     '''
     set bitmask of lower parts to be truncated from ip address
-    part from https://www.privacyfoundation.ch/de/service/anonip.html
     '''
-    debug("%s truncate %d bits" % (self.__class__.__name__, parsed_args.ipv6mask))
+    debug("%s will truncate %d rightmost bits",
+          self.__class__.__name__, parsed_args.ipv6mask)
     self.mask = self.FULL_MASK << parsed_args.ipv6mask
 
   def anonymize(self, line):
@@ -230,19 +258,10 @@ class Ipv6Anonymizer(AnonymizerBase):
 
     for match in self.pattern.finditer(line):
       matched_string = match.group(0)
-      # thanks to https://www.privacyfoundation.ch/de/service/anonip.html (adapted)
-      unpacked = unpack('!QQ', inet_pton(AF_INET6, matched_string))
-      int_addr = unpacked[0] << 64 | unpacked[1]
-      int_masked_addr = int_addr & self.mask
-      str_masked_addr = inet_ntop(
-        AF_INET6,
-        pack(
-          '!QQ',
-          int_masked_addr >> 64,
-          int_masked_addr & 18446744073709551615) # 2**61 -1
-      )
-
-      line = line.replace(matched_string, str_masked_addr, 1)
+      address_int = self.ipv6_address_to_int(matched_string)
+      masked_address_int = address_int & self.mask
+      masked_address_str = self.int_to_ipv6_address(masked_address_int)
+      line = line.replace(matched_string, masked_address_str, 1)
 
     return line
 
