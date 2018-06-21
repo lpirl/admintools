@@ -33,7 +33,7 @@ from re import compile as compile_re, IGNORECASE
 from tempfile import mkstemp
 from shutil import copy
 from os import remove, fdopen
-from socket import inet_pton, inet_ntop, AF_INET, AF_INET6, error as sockerror
+from socket import inet_pton, inet_ntop, AF_INET, AF_INET6
 from struct import unpack, pack
 
 class Cleaner(object):
@@ -126,9 +126,11 @@ class Ipv4Anonymizer(AnonymizerBase):
   def __init__(self, argparser):
     ''' see base class' documentation on ``__init__`` '''
     super().__init__(argparser)
-    argparser.add_argument('--ipv4mask', metavar='N', help='truncate the last N bits of IPv4 address',
-                        type=lambda x: self.verify_ipvmask(argparser, x), default=8)
+    argparser.add_argument('--ipv4mask', metavar='N', default=8,
+                           help='truncate the last N bits of IPv4 address',
+                           type=lambda x: self.verify_ipvmask(argparser, x))
     self.pattern = compile_re(self.__class__.REGEXP)
+    self.mask = None
 
   def setup(self, parsed_args):
     '''
@@ -152,18 +154,19 @@ class Ipv4Anonymizer(AnonymizerBase):
 
     return line
 
-  def verify_ipvmask(self, parser, arg):
+  @staticmethod
+  def verify_ipvmask(parser, arg):
     '''
       verifies if the supplied ipv4 mask is valid.
     '''
     error_msg = '--ipv4mask must be in between 1 and 32'
     try:
-        mask = int(arg)
+      mask = int(arg)
     except ValueError:
-        parser.error(error_msg)
+      parser.error(error_msg)
 
-    if mask not in range(1,33):
-        parser.error(error_msg)
+    if mask not in range(1, 33):
+      parser.error(error_msg)
 
     return mask
 
@@ -180,9 +183,11 @@ class Ipv6Anonymizer(AnonymizerBase):
   def __init__(self, argparser):
     ''' see base class' documentation on ``__init__`` '''
     super().__init__(argparser)
-    argparser.add_argument('--ipv6mask', metavar='N', help='truncate the last N bits of IPv6 address',
-                        type=lambda x: self.verify_ipvmask(argparser, x), default=64)
+    argparser.add_argument('--ipv6mask', metavar='N', default=64,
+                           help='truncate the last N bits of IPv6 address',
+                           type=lambda x: self.verify_ipvmask(argparser, x))
     self.pattern = compile_re(self.__class__.REGEXP, IGNORECASE)
+    self.mask = None
 
   def setup(self, parsed_args):
     '''
@@ -199,27 +204,34 @@ class Ipv6Anonymizer(AnonymizerBase):
     for match in self.pattern.finditer(line):
       matched_string = match.group(0)
       # thanks to https://www.privacyfoundation.ch/de/service/anonip.html (adapted)
-      up = unpack('!QQ', inet_pton(AF_INET6, matched_string))
-      int_addr = up[0] << 64 | up[1]
+      unpacked = unpack('!QQ', inet_pton(AF_INET6, matched_string))
+      int_addr = unpacked[0] << 64 | unpacked[1]
       int_masked_addr = int_addr & self.mask
-      str_masked_addr = inet_ntop(AF_INET6, pack('!QQ', int_masked_addr >> 64, int_masked_addr & 18446744073709551615)) # 2**61 -1 = 18446744073709551615
+      str_masked_addr = inet_ntop(
+        AF_INET6,
+        pack(
+          '!QQ',
+          int_masked_addr >> 64,
+          int_masked_addr & 18446744073709551615) # 2**61 -1
+      )
 
       line = line.replace(matched_string, str_masked_addr, 1)
 
     return line
 
-  def verify_ipvmask(self, parser, arg):
+  @staticmethod
+  def verify_ipvmask(parser, arg):
     '''
       verifies if the supplied ipv6 mask is valid.
     '''
     error_msg = "--ipv4mask must be in between 1 and 128"
     try:
-        mask = int(arg)
+      mask = int(arg)
     except ValueError:
-        parser.error(error_msg)
+      parser.error(error_msg)
 
-    if mask not in range(1,129):
-        parser.error(error_msg)
+    if mask not in range(1, 129):
+      parser.error(error_msg)
 
     return mask
 
