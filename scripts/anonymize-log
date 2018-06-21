@@ -113,7 +113,7 @@ class AnonymizerBase(object, metaclass=ABCMeta):
 
 @AnonymizerRegistry.register
 class Ipv4Anonymizer(AnonymizerBase):
-  ''' anonymizes IPv4 addresses by truncating rightmost parts '''
+  ''' anonymizes IPv4 addresses by zeroing the rightmost bits '''
 
   # thanks to https://stackoverflow.com/a/106223 (adapted)
   REGEXP = (
@@ -127,15 +127,16 @@ class Ipv4Anonymizer(AnonymizerBase):
     ''' see base class' documentation on ``__init__`` '''
     super().__init__(argparser)
     argparser.add_argument('--ipv4mask', metavar='N', default=8,
-                           help='truncate the last N bits of IPv4 address',
-                           type=lambda x: self.verify_ipvmask(argparser, x))
+                           help=('truncate rightmost N bits of '
+                                 'IPv4 addresses, 1 <= N <= 32'),
+                           choices=range(1, 33))
     self.pattern = compile_re(self.__class__.REGEXP)
     self.mask = None
 
   def setup(self, parsed_args):
     '''
-      set bitmask of lower parts to be truncated from ip address
-      part from https://www.privacyfoundation.ch/de/service/anonip.html
+    set bitmask of lower parts to be truncated from ip address
+    part from https://www.privacyfoundation.ch/de/service/anonip.html
     '''
     debug("%s truncate %d bits" % (self.__class__.__name__, parsed_args.ipv4mask))
     # (255.255.255.255) << parsed_args.ipv4mask
@@ -154,27 +155,12 @@ class Ipv4Anonymizer(AnonymizerBase):
 
     return line
 
-  @staticmethod
-  def verify_ipvmask(parser, arg):
-    '''
-      verifies if the supplied ipv4 mask is valid.
-    '''
-    error_msg = '--ipv4mask must be in between 1 and 32'
-    try:
-      mask = int(arg)
-    except ValueError:
-      parser.error(error_msg)
-
-    if mask not in range(1, 33):
-      parser.error(error_msg)
-
-    return mask
 
 
 @AnonymizerRegistry.register
 class Ipv6Anonymizer(AnonymizerBase):
   '''
-  anonymizes IPv6 addresses by truncating rightmost parts
+  anonymizes IPv6 addresses by zeroing the rightmost bits
   '''
 
   # thanks to https://gist.github.com/dfee/6ed3a4b05cfe7a6faf40a2102408d5d8
@@ -184,15 +170,16 @@ class Ipv6Anonymizer(AnonymizerBase):
     ''' see base class' documentation on ``__init__`` '''
     super().__init__(argparser)
     argparser.add_argument('--ipv6mask', metavar='N', default=64,
-                           help='truncate the last N bits of IPv6 address',
-                           type=lambda x: self.verify_ipvmask(argparser, x))
+                           help=('truncate rightmost N bits of '
+                                 'IPv6 addresses1 <= N <= 128'),
+                           choices=range(1, 129))
     self.pattern = compile_re(self.__class__.REGEXP, IGNORECASE)
     self.mask = None
 
   def setup(self, parsed_args):
     '''
-      set bitmask of lower parts to be truncated from ip address
-      part from https://www.privacyfoundation.ch/de/service/anonip.html
+    set bitmask of lower parts to be truncated from ip address
+    part from https://www.privacyfoundation.ch/de/service/anonip.html
     '''
     debug("%s truncate %d bits" % (self.__class__.__name__, parsed_args.ipv6mask))
     # ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff << parsed_args.ipv6mask
@@ -218,22 +205,6 @@ class Ipv6Anonymizer(AnonymizerBase):
       line = line.replace(matched_string, str_masked_addr, 1)
 
     return line
-
-  @staticmethod
-  def verify_ipvmask(parser, arg):
-    '''
-      verifies if the supplied ipv6 mask is valid.
-    '''
-    error_msg = "--ipv4mask must be in between 1 and 128"
-    try:
-      mask = int(arg)
-    except ValueError:
-      parser.error(error_msg)
-
-    if mask not in range(1, 129):
-      parser.error(error_msg)
-
-    return mask
 
 
 
