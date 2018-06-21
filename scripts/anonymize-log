@@ -131,27 +131,27 @@ class Ipv4Anonymizer(AnonymizerBase):
     self.pattern = compile_re(self.__class__.REGEXP)
 
   def setup(self, parsed_args):
-    ''' 
-      set bitmask of lower parts to be truncated from ip address  
+    '''
+      set bitmask of lower parts to be truncated from ip address
       part from https://www.privacyfoundation.ch/de/service/anonip.html
     '''
     debug("%s truncate %d bits" % (self.__class__.__name__, parsed_args.ipv4mask))
     # (255.255.255.255) << parsed_args.ipv4mask
     self.mask = 4294967295 << parsed_args.ipv4mask
-    
+
   def anonymize(self, line):
     ''' returns anonymized ``line`` '''
     for match in self.pattern.finditer(line):
       matched_string = match.group(0)
       # https://www.privacyfoundation.ch/de/service/anonip.html (adapted)
-      int_addr = unpack("!I", inet_pton(AF_INET, matched_string))[0] 
+      int_addr = unpack("!I", inet_pton(AF_INET, matched_string))[0]
       int_masked_addr = int_addr & self.mask
       str_masked_addr = inet_ntop(AF_INET, pack('!I', int_masked_addr))
-      
+
       line = line.replace(matched_string, str_masked_addr, 1)
 
     return line
-    
+
   def verify_ipvmask(self, parser, arg):
     '''
       verifies if the supplied ipv4 mask is valid.
@@ -183,19 +183,19 @@ class Ipv6Anonymizer(AnonymizerBase):
     argparser.add_argument('--ipv6mask', metavar='N', help='truncate the last N bits of IPv6 address',
                         type=lambda x: self.verify_ipvmask(argparser, x), default=64)
     self.pattern = compile_re(self.__class__.REGEXP, IGNORECASE)
-    
+
   def setup(self, parsed_args):
-    ''' 
-      set bitmask of lower parts to be truncated from ip address 
+    '''
+      set bitmask of lower parts to be truncated from ip address
       part from https://www.privacyfoundation.ch/de/service/anonip.html
     '''
     debug("%s truncate %d bits" % (self.__class__.__name__, parsed_args.ipv6mask))
     # ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff << parsed_args.ipv6mask
     self.mask = 340282366920938463463374607431768211455 << parsed_args.ipv6mask
-    
+
   def anonymize(self, line):
     ''' see base class' documentation on ``anonymize`` '''
-    
+
     for match in self.pattern.finditer(line):
       matched_string = match.group(0)
       # thanks to https://www.privacyfoundation.ch/de/service/anonip.html (adapted)
@@ -203,11 +203,11 @@ class Ipv6Anonymizer(AnonymizerBase):
       int_addr = up[0] << 64 | up[1]
       int_masked_addr = int_addr & self.mask
       str_masked_addr = inet_ntop(AF_INET6, pack('!QQ', int_masked_addr >> 64, int_masked_addr & 18446744073709551615)) # 2**61 -1 = 18446744073709551615
-      
+
       line = line.replace(matched_string, str_masked_addr, 1)
 
     return line
-    
+
   def verify_ipvmask(self, parser, arg):
     '''
       verifies if the supplied ipv6 mask is valid.
