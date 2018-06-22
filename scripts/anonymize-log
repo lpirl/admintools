@@ -166,7 +166,7 @@ class Ipv4Anonymizer(AnonymizerBase):
     ''' see base class' documentation on ``__init__`` '''
     super().__init__(argparser)
     argparser.add_argument('--ipv4mask', metavar='N', default=8,
-                           help=('truncate rightmost N bits of '
+                           help=('zero rightmost N bits of '
                                  'IPv4 addresses, 1 <= N <= 32'),
                            choices=range(1, 33))
     self.mask = None
@@ -239,7 +239,7 @@ class Ipv6Anonymizer(AnonymizerBase):
     ''' see base class' documentation on ``__init__`` '''
     super().__init__(argparser)
     argparser.add_argument('--ipv6mask', metavar='N', default=64,
-                           help=('truncate rightmost N bits of '
+                           help=('zero rightmost N bits of '
                                  'IPv6 addresses, 1 <= N <= 128'),
                            choices=range(1, 129))
     self.mask = None
