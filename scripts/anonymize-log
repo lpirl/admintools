@@ -240,7 +240,7 @@ class Ipv6Anonymizer(AnonymizerBase):
     super().__init__(argparser)
     argparser.add_argument('--ipv6mask', metavar='N', default=64,
                            help=('truncate rightmost N bits of '
-                                 'IPv6 addresses1 <= N <= 128'),
+                                 'IPv6 addresses, 1 <= N <= 128'),
                            choices=range(1, 129))
     self.mask = None
 
