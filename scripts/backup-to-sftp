@@ -215,7 +215,8 @@ fi
 
 RSYNC_OPTS+=' --human-readable'
 RSYNC_OPTS+=' --one-file-system'
-RSYNC_OPTS+=' --delete-during'
+RSYNC_OPTS+=' --fuzzy'
+RSYNC_OPTS+=' --delete-delay'
 RSYNC_OPTS+=' --delete-excluded'
 RSYNC_OPTS+=' --exclude=/tmp'
 RSYNC_OPTS+=' --exclude="*\\[nb\\]/*"'
