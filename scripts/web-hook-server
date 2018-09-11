@@ -1,0 +1,168 @@
+''':'
+exec python3 -OO "$0" "$@"
+'''
+# The above is a little hack to use arguments in the shebang.
+
+__doc__ = """
+This server is intended to be a listener for Web hooks.
+
+Upon (any) connections to this server, it executes the command provided
+via command line, including the provided arguments.
+
+This server does even read the data sent to it.
+It always returns HTTP 200 before executing the command.
+
+You should really run this server behind a proper Web server
+(e.g., proxied behind Nginx). That's also why it can only bind to
+127.0.0.1.
+"""
+
+
+
+import argparse
+from logging import getLogger, DEBUG, INFO, debug, info, warn, error
+from socket import socket, AF_INET, SOCK_STREAM
+from subprocess import run, DEVNULL
+from sys import stdout, stderr
+from os import chdir
+
+
+
+HTTP_RESPONSE = '\n'.join((
+  'HTTP/1.1 200 OK',
+  'Content-Length: 0',
+  'Connection: close',
+  '',
+  '',
+)).encode()
+
+
+
+class Cleaner(object):
+  '''
+  A sort of a job queue that holds jobs which should be run (in order)
+  before the program exits.
+  '''
+
+  def __init__(self):
+    ''' initializes instance variables '''
+    self._jobs = []
+
+  def add_job(self, func, *args, **kwargs):
+    ''' add a job to the queue '''
+    self._jobs.append((func, args, kwargs))
+
+  def do_all_jobs(self):
+    ''' do (and remove) all the jobs in (from) the queue '''
+    while self._jobs:
+      self.do_one_job()
+
+  def do_one_job(self):
+    ''' do and remove one job from the queue '''
+    # in reverse order:
+    func, args, kwargs = self._jobs.pop()
+    debug("cleanup: func=%s.%s, args=%r, kwargs=%r", func.__module__,
+          func.__name__, args, kwargs)
+    func(*args, **kwargs)
+
+def caught_main(cleaner):
+  '''
+  Actual main procedure.
+
+  Uncaught exceptions will be handled in calling procedure.
+  '''
+
+  parser = argparse.ArgumentParser(
+    description=__doc__,
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter
+  )
+
+  parser.add_argument('-d', '--debug', action='store_true', default=False,
+                      help='turn on debug messages')
+  parser.add_argument('-p', '--port', type=int, default=11000,
+                      help='port to listen on')
+  parser.add_argument('-c', '--chdir', type=str, default=None,
+                      help='change to directory before running the server')
+  parser.add_argument('command', help=('command to run when a connection'
+                                       ' to this server is made'))
+  parser.add_argument('args', nargs='*', default=[],
+                      help='arguments to command')
+
+  args = parser.parse_args()
+
+  # set up logger
+  logger = getLogger()
+  logger.name = ""
+  if args.debug:
+    logger.setLevel(DEBUG)
+
+  if args.chdir:
+    debug("will change directory to '%s", args.chdir)
+    chdir(args.chdir)
+
+  run_args = [args.command] + args.args
+  run_args_debug_string = ' '.join(run_args)
+
+  run_kwargs = {}
+  if getLogger().level <= INFO:
+    debug("will send command output to stdout/stderr")
+    run_kwargs.setdefault("stdout", stdout)
+    run_kwargs.setdefault("stderr", stderr)
+  else:
+    debug("will send command output to /dev/null")
+    run_kwargs.setdefault("stdout", DEVNULL)
+    run_kwargs.setdefault("stderr", DEVNULL)
+
+  debug("will listen on 127.0.0.1:%u", args.port)
+  server = socket(AF_INET, SOCK_STREAM)
+  server.bind(('127.0.0.1', args.port))
+  cleaner.add_job(server.close)
+  server.listen(3)
+
+  while True:
+    sock, client_address = server.accept()
+    debug("got connection from %s", client_address)
+    sock.sendall(HTTP_RESPONSE)
+    sock.close()
+
+    info("will execute '%s'", run_args_debug_string)
+    returncode = run(run_args, **run_kwargs).returncode
+
+    (warn if returncode else info)(
+      "command '%s' finished with exit status %u", run_args_debug_string,
+      returncode
+    )
+
+
+
+def main():
+  '''
+  Wrapper around actual main procedure.
+
+  Will hold back uncaught exceptions of the (actual) main procedure,
+  will run clean up jobs, and will raise the held exception afterwards.
+  '''
+
+  cleaner = Cleaner()
+  abnormal_termination = False
+  try:
+    caught_main(cleaner)
+  except KeyboardInterrupt:
+    info("shutting down")
+  except Exception as exception:
+    error("abnormal termination (see error at end of output)")
+    abnormal_termination = True
+    raise exception
+  finally:
+    debug("running cleanup jobs")
+    cleaner.do_all_jobs()
+
+  if abnormal_termination:
+    exit(1)
+  else:
+    debug("success - bye")
+
+
+
+if __name__ == '__main__':
+  main()
