@@ -72,10 +72,10 @@ def caught_main(cleaner):
   # set up logger
   logger = getLogger()
   logger.name = ""
-  if args.debug:
-    logger.setLevel(DEBUG)
   if args.verbose:
     logger.setLevel(INFO)
+  if args.debug:
+    logger.setLevel(DEBUG)
 
 
   output = check_output(("echo", "Hello World"), universal_newlines=True)
