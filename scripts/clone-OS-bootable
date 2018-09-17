@@ -363,6 +363,24 @@ def sub_in_file(path, old, new):
 
 
 
+def check_dependencies(dest_fs):
+  """ check some dependencies for presence """
+
+  dpkg_result = run(("dpkg", "--get-selections"), stdout=PIPE)
+  installed_packages = set(l.split()[0] for l in
+                           dpkg_result.stdout.decode().splitlines())
+
+  if dest_fs.is_luks():
+    for requirement in ["cryptsetup", "cryptsetup-initramfs"]:
+      info("check if '%s' is installed", requirement)
+      if requirement not in installed_packages:
+        error("required package '%s' not installed", requirement)
+        import pdb
+        pdb.set_trace()
+        exit(5)
+
+
+
 def rsync(src_fs, dest_fs, cli_args):
 
   run_args = ["rsync"]
@@ -421,38 +439,31 @@ def make_luks_root_bootable(dest_fs):
   if not dest_fs.is_luks():
     return
 
-  debug("update crypttab in target file system")
-  add_line_to_file(
-    dest_fs.path("/etc/crypttab"),
-    " ".join((
-      CRYPTSETUP_NAME,
-      DEVICE_BY_UUID_TEMPLATE % dest_fs.uuid_on_partition,
-      dest_fs.password_file,
-      "luks,keyscript=/bin/cat"
-    ))
-  )
-
-  debug("enabling cryptroot in kernel command line")
-  replace_in_file(
-    dest_fs.path("/etc/default/grub"),
-    'GRUB_CMDLINE_LINUX_DEFAULT="',
-    'GRUB_CMDLINE_LINUX_DEFAULT="cryptopts=source=%s ' % (
-      DEVICE_BY_UUID_TEMPLATE % dest_fs.uuid_on_partition,
-    )
-  )
-
   debug("enabling encrypted disks in config of target Grub")
+  # makes Grub decrypt block device (to access /boot)
   add_line_to_file(
     dest_fs.path("/etc/default/grub"),
     "GRUB_ENABLE_CRYPTODISK=y"
   )
 
   debug("adding support for cryptsetup in target initramfs")
+  # soon deprecated (can be removed then)
   add_line_to_file(
     dest_fs.path("/etc/cryptsetup-initramfs/conf-hook"),
     "CRYPTSETUP=y"
     )
   dest_fs.run_chrooted(("update-initramfs", "-u"))
+
+  debug("enabling cryptroot in kernel command line")
+  # makes the scripts provided by ``cryptsetup-initramfs`` decrypt the
+  # root device (to access / and hand over to systemd)
+  replace_in_file(
+    dest_fs.path("/etc/default/grub"),
+    'GRUB_CMDLINE_LINUX="',
+    'GRUB_CMDLINE_LINUX="cryptopts=source=%s,luks ' % (
+      DEVICE_BY_UUID_TEMPLATE % dest_fs.uuid_on_partition,
+    )
+  )
 
 
 
@@ -552,6 +563,8 @@ def cleaned_main(cleaner):
                        password=cli_args.password,
                        password_file=cli_args.password_file,
                        mount_options=cli_args.mount_options)
+
+  check_dependencies(dest_fs)
 
   rsync(src_fs, dest_fs, cli_args)
 
