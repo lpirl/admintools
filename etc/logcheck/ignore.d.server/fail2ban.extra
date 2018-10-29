@@ -1,2 +1,2 @@
-^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ fail2ban.filter\[[[:digit:]]+\]: INFO flush performed on SYSLOG$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ fail2ban.server\[[[:digit:]]+\]: INFO flush performed on SYSLOG$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ fail2ban.filter\[[[:digit:]]+\]: INFO Log rotation detected for [^[:space:]]+$
