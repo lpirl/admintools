@@ -1,0 +1,1 @@
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ smartd\[[[:digit:]]+\]: Device: [^[:space:]]+ \[SAT\], is in STANDBY mode, suspending checks$
