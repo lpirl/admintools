@@ -11,8 +11,8 @@ To set a timeout, use coreutils' `timeout` utility.
 
 from sys import stdout, stderr, argv, version_info
 import argparse
-from logging import getLogger, INFO, info, error
-from subprocess import DEVNULL, call as subprocess_call
+from logging import getLogger, INFO, DEBUG, info, error, debug, warn
+from subprocess import DEVNULL, call as subprocess_call, check_output
 from abc import ABCMeta, abstractmethod
 from time import sleep
 import socket
@@ -227,6 +227,69 @@ class UUIDCondition(BaseCondition):
       return "deactivated UUID condition"
 
 
+
+@ConditionRegistry.register
+class NetworkUnmeteredCondition(BaseCondition):
+  """
+  checks whether the network connection of the default route is
+  (suspected to be) not metered; requires the command ``nmcli``
+  """
+
+  def __init__(self, argparser):
+    super().__init__(argparser)
+    argparser.add_argument("--network-unmetered", action="store_true",
+                           help=self.__class__.__doc__)
+    self.nmcli_available = None
+
+  def setup(self, parsed_args):
+    super().setup(parsed_args)
+
+    self.enabled = parsed_args.network_unmetered
+    if not self.enabled:
+      return
+
+    self.nmcli_available = Call(
+      ("which", "nmcli"), silent=True
+    ).returncode == 0
+    if not self.nmcli_available:
+      warning("``nmcli`` not available; cannot check if network "
+              "connections are metered")
+      self.enabled = False
+
+  def met(self):
+    if not self.enabled:
+      return None
+
+    # yes, we compute all this every single run, since network connections
+    # might change over time:
+
+    default_route = check_output(
+      ("ip", "route", "show", "default")
+    ).decode().strip()
+    debug("default route: %s", default_route)
+    if not default_route:
+      debug("default route appears to be unset")
+      return None
+
+    default_interface = default_route.split(" ")[4]
+    debug("default interface: %s", default_interface)
+
+    metered = check_output(
+      ("nmcli", "-t", "-g", "GENERAL.METERED", "dev", "show",
+       default_interface)
+    ).decode().strip()
+    debug("default interface metered?: %s", metered)
+
+    return metered.lower().startswith("no")
+
+  def __str__(self):
+    if self.nmcli_available:
+      return "default network connection is unmetered"
+    else:
+      return ("deactivated condition if default network connection is"
+              "unmetered")
+
+
 def wait_for_conditions_to_be_met(conditions, check_interval):
   """
   Periodically (``check_interval``) checks all conditions and returns
@@ -269,6 +332,8 @@ def main():
 
   argparser.add_argument('-v', '--verbose', action='store_true',
                          default=False, help='turn on verbose messages')
+  argparser.add_argument('-d', '--debug', action='store_true',
+                         default=False, help='turn on debug messages')
   argparser.add_argument('-i', '--interval', type=int, default=57,
                          help='time to wait between checks (seconds)')
   argparser.add_argument('-t', '--timeout', type=int, default=7,
@@ -289,6 +354,8 @@ def main():
   getLogger().name = ""
   if args.verbose:
     getLogger().setLevel(INFO)
+  if args.debug:
+    getLogger().setLevel(DEBUG)
 
   if args.single:
     user = getuser()
