@@ -9,9 +9,9 @@ their execution until the system is on-line and on AC.
 To set a timeout, use coreutils' `timeout` utility.
 """
 
-from sys import stdout, stderr, argv, version_info
+from sys import stdout, stderr, argv
 import argparse
-from logging import getLogger, INFO, DEBUG, info, error, debug, warn
+from logging import getLogger, INFO, DEBUG, info, error, debug, warning
 from subprocess import DEVNULL, call as subprocess_call, check_output
 from abc import ABCMeta, abstractmethod
 from time import sleep
@@ -24,7 +24,7 @@ EXIT_CODE_ARGUMENT_ERROR = 2
 
 
 
-class Call(object):
+class Call:
   """
   This class partly mocks ``subprocess.run`` and
   ``subprocess.CompletedProcess`` available in Python >= 3.5, since we
@@ -49,7 +49,7 @@ class Call(object):
 
 
 
-class ConditionRegistry(object, metaclass=ABCMeta):
+class ConditionRegistry(metaclass=ABCMeta):
   """
   Concrete subclasses of ``BaseCondition`` register at this class.
   """
@@ -58,7 +58,7 @@ class ConditionRegistry(object, metaclass=ABCMeta):
 
 
 
-class BaseCondition(object, metaclass=ABCMeta):
+class BaseCondition(metaclass=ABCMeta):
   """
   A common base class for all conditions.
   """
@@ -66,7 +66,6 @@ class BaseCondition(object, metaclass=ABCMeta):
   def __init__(self, argparser):
     """ called initially, mainly to enable the addition of arguments """
     self.timeout = None
-
 
   def setup(self, parsed_args):
     """ called once prior checks (i.e. calls to ``met``) """
@@ -91,21 +90,22 @@ class PingCondition(BaseCondition):
     super().__init__(argparser)
     argparser.add_argument("-p", "--ping", metavar="HOST",
                            help=self.__class__.__doc__)
-    self.ip = None
+    self.ip_address = None
 
   def setup(self, parsed_args):
     super().setup(parsed_args)
-    self.ip = parsed_args.ping
+    self.ip_address = parsed_args.ping
 
   def met(self):
-    if not self.ip:
+    if not self.ip_address:
       return None
-    call = Call(("ping", "-c", "1", "-W", str(self.timeout), self.ip))
+    call = Call(("ping", "-c", "1", "-W",
+                 str(self.timeout), self.ip_address))
     return call.returncode == 0
 
   def __str__(self):
-    if self.ip:
-      return "ping %s" % self.ip
+    if self.ip_address:
+      return "ping %s" % self.ip_address
     else:
       return "deactivated ping condition"
 
@@ -182,10 +182,10 @@ class OnACCondition(BaseCondition):
 
   def setup(self, parsed_args):
     super().setup(parsed_args)
-    self.ac = parsed_args.ac
+    self.on_ac = parsed_args.ac
 
   def met(self):
-    if not self.ac:
+    if not self.on_ac:
       return None
     if not isfile("/sys/class/power_supply/AC/online"):
       return True
@@ -193,7 +193,7 @@ class OnACCondition(BaseCondition):
       return online_fp.readline().startswith("1")
 
   def __str__(self):
-    if self.ac:
+    if self.on_ac:
       return "on AC condition"
     else:
       return "deactivated on AC condition"
