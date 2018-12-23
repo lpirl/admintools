@@ -1,0 +1,207 @@
+#!/bin/sh
+''':'
+exec python3 -OO "$0" "$@"
+'''
+# The above is a little hack to use arguments in the shebang.
+
+__doc__ = """
+This script finds and prints empty directories.
+
+As an additional functionality in comparison to, say, the ``find``
+command, a state file can be specified which enables listing only
+directories which have not been empty during the previous run.
+
+This can be useful, e.g., for long-term/archive storage file systems,
+where "suddenly empty" directories should be noticed.
+Directories might be "suddenly empty" due to, e.g., erroneous usage of
+command line tools or failures in the underlying infrastructure (e.g.,
+file system, disk).
+
+If this script is installed as a cron job and the operating system is
+capable of sending emails, you'll receive email notifications.
+"""
+
+import argparse
+from logging import (getLogger, ERROR, DEBUG, INFO, debug, info,
+                     warning, error)
+from os import walk, listdir
+from os.path import join as path_join, abspath, ismount, isfile
+from json import JSONDecodeError, load, dump
+
+
+
+def handle_walk_error(exception):
+  """
+  Handles ``OSError``s during ``os.walk``s, i.e., print the error
+  message in verbose mode.
+
+  Of course, this function might be used to handle ``OSErrors``
+  occurring in other situations as well.
+  """
+  warning('Got "%s" when processing "%s"', exception.strerror,
+          exception.filename)
+
+
+def set_up_logger(be_quiet, be_verbose, print_debug):
+  """
+  configures the logger according to (Boolean) log levels specified
+  """
+
+  logger = getLogger()
+  logger.name = ""
+
+  if be_quiet and be_verbose:
+    error(('conflicting options specified: '
+           'cannot be quiet and verbose at the same time'))
+    exit(1)
+  if be_quiet and print_debug:
+    error(('conflicting options specified: '
+           'cannot be quiet and print debug messages at the same time'))
+    exit(1)
+
+  if be_quiet:
+    logger.setLevel(ERROR)
+  if be_verbose:
+    logger.setLevel(INFO)
+  if print_debug:
+    logger.setLevel(DEBUG)
+
+
+
+def get_empty_dirs(paths, no_xdev=False, use_relative_paths=False):
+  """ returns a set of empty directories found in ``paths``"""
+
+  debug('going to process directories: %s', paths)
+  empty_dirs = set()
+
+  for path in paths:
+
+    if not use_relative_paths:
+      path = abspath(path)
+
+    for root, dir_names, _ in walk(path, onerror=handle_walk_error):
+
+      # we iterate over a copy, so we can modify the original list:
+      for dir_name in dir_names[:]:
+
+        dir_path = path_join(root, dir_name)
+        debug('processing "%s"', dir_path)
+
+        if no_xdev and ismount(dir_path):
+          info('not descending into mount point "%s"', dir_path)
+          # this is O(n) and could be improved:
+          dir_names.remove(dir_name)
+
+        try:
+          dir_is_empty = not bool(listdir(dir_path))
+        except OSError as exception:
+          handle_walk_error(exception)
+        else:
+          if dir_is_empty:
+            info('empty: "%s"', dir_path)
+            empty_dirs.add(dir_path)
+
+  return empty_dirs
+
+
+
+def load_paths(file_name):
+  """
+  loads paths from ``file_name`` and returns those as a set, or returns
+  an empty set if something goes wrong
+  """
+
+  paths = set()
+
+  if not file_name:
+    debug('no file specified, not loading paths')
+    return paths
+
+  if not isfile(file_name):
+    info('specified file is not a file, not loading paths')
+    return paths
+
+  try:
+    with open(file_name, 'r') as filep:
+      paths = set(load(filep))
+  except OSError as exception:
+    warning('file seems to be unreadable (%s), cannot load paths',
+            exception)
+  except JSONDecodeError as exception:
+    warning('file seems to be corrupt (%s), cannot load paths',
+            exception)
+
+  return paths
+
+
+
+def print_new_items(old, new):
+  """ prints items which are in ``new`` but not in ``new``, sorted """
+  for dir_name in sorted(new - old):
+    print(dir_name)
+
+
+
+def store_paths(file_name, paths):
+  """ stores ``paths`` in ``file_name`` """
+
+  if not file_name:
+    debug('no file specified, not storing paths')
+    return paths
+
+  try:
+    with open(file_name, 'w') as filep:
+      dump(list(paths), filep)
+  except Exception as exception:
+    error('could not write file: %s', exception)
+    exit(2)
+
+
+
+def main():
+  '''
+  Actual main procedure.
+
+  Uncaught exceptions will be handled in calling procedure (``main()``).
+  '''
+
+  parser = argparse.ArgumentParser(
+    description=__doc__,
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter
+  )
+
+  parser.add_argument('-d', '--debug', action='store_true', default=False,
+                      help='turn on debug messages')
+  parser.add_argument('-v', '--verbose', action='store_true', default=False,
+                      help='turn on verbose messages')
+  parser.add_argument('-q', '--quiet', action='store_true', default=False,
+                      help='turn off warning messages')
+  parser.add_argument('-r', '--relative', action='store_true', default=False,
+                      help='don\'t normalize to absolute paths')
+  parser.add_argument('-x', '--no-xdev', action='store_true', default=False,
+                      help='don\'t cross file system boundaries')
+  parser.add_argument('-s', '--state-file', default=None,
+                      help=('file to store list of empty directories in; '
+                            'causes output to contain only directory '
+                            'which have not been empty during the '
+                            'previous run'))
+  parser.add_argument('paths', nargs='*', default=['.'],
+                      help='path to search empty directories in')
+
+
+  args = parser.parse_args()
+
+  set_up_logger(args.quiet, args.verbose, args.debug)
+
+  empty_dirs = get_empty_dirs(args.paths, args.no_xdev, args.relative)
+
+  previously_empty_dirs = load_paths(args.state_file)
+
+  print_new_items(previously_empty_dirs, empty_dirs)
+
+  store_paths(args.state_file, empty_dirs)
+
+
+
+if __name__ == '__main__':
+  main()
