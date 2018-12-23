@@ -1,0 +1,212 @@
+#!/bin/sh
+''':'
+exec python3 -OO "$0" "$@"
+'''
+# The above is a little hack to use arguments in the shebang.
+
+__doc__ = """
+This script finds and prints empty directories.
+
+As an additional functionality in comparison to, say, the ``find``
+command, a state file can be specified which enables listing only
+directories which have not been empty during the previous run.
+
+This can be useful, e.g., for long-term/archive storage file systems,
+where "suddenly empty" directories should be noticed.
+Directories might be "suddenly empty" due to, e.g., erroneous usage of
+command line tools or failures in the underlying infrastructure (e.g.,
+file system, disk).
+
+If this script is installed as a cron job and the operating system is
+capable of sending emails, you'll receive email notifications.
+"""
+
+import argparse
+from logging import (getLogger, ERROR, DEBUG, INFO, debug, info,
+                     warning, error)
+from os import walk, listdir
+from os.path import join as path_join, abspath, isdir, isfile
+from json import JSONDecodeError, load, dump
+
+
+class Cleaner:
+  '''
+  A sort of a job queue that holds jobs which should be run (in order)
+  before the program exits.
+  '''
+
+  def __init__(self):
+    ''' initializes instance variables '''
+    self._jobs = []
+
+  def add_job(self, func, *args, **kwargs):
+    ''' add a job to the queue '''
+    self._jobs.append((func, args, kwargs))
+
+  def do_all_jobs(self):
+    ''' do (and remove) all the jobs in (from) the queue '''
+    while self._jobs:
+      self.do_one_job()
+
+  def do_one_job(self):
+    ''' do and remove one job from the queue '''
+    # in reverse order:
+    func, args, kwargs = self._jobs.pop()
+    debug("cleanup: func=%s.%s, args=%r, kwargs=%r", func.__module__,
+          func.__name__, args, kwargs)
+    func(*args, **kwargs)
+
+
+
+def handle_walk_error(exception):
+  """
+  Handles ``OSError``s during ``os.walk``s, i.e., print the error
+  message in verbose mode.
+
+  Of course, this function might be used to handle ``OSErrors``
+  occurring in other situations as well.
+  """
+  warning('Got "%s" when processing "%s"', exception.strerror,
+          exception.filename)
+
+
+
+def caught_main(cleaner):
+  '''
+  Actual main procedure.
+
+  Uncaught exceptions will be handled in calling procedure (``main()``).
+  '''
+
+  parser = argparse.ArgumentParser(
+    description=__doc__,
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter
+  )
+
+  parser.add_argument('-d', '--debug', action='store_true', default=False,
+                      help='turn on debug messages')
+  parser.add_argument('-v', '--verbose', action='store_true', default=False,
+                      help='turn on verbose messages')
+  parser.add_argument('-q', '--quiet', action='store_true', default=False,
+                      help='turn off warning messages')
+  parser.add_argument('-r', '--relative', action='store_true', default=False,
+                      help='don\'t normalize to absolute paths')
+  parser.add_argument('-s', '--state-file', default=None,
+                      help=('file to store list of empty directories in; '
+                            'causes output to contain only directory '
+                            'which have not been empty during the '
+                            'previous run'))
+  parser.add_argument('paths', nargs='*', default=['.'],
+                      help='path to search empty directories in')
+
+
+  args = parser.parse_args()
+
+
+  # set up logger
+  logger = getLogger()
+  logger.name = ""
+  if args.quiet:
+    logger.setLevel(ERROR)
+  if args.verbose:
+    logger.setLevel(INFO)
+  if args.debug:
+    logger.setLevel(DEBUG)
+
+
+  # check for conflicting command line options:
+  if args.quiet and args.verbose:
+    error(('conflicting options specified: '
+           'cannot be "quiet" and "verbose" at the same time'))
+    exit(1)
+  if args.quiet and args.debug:
+    error(('conflicting options specified: '
+           'cannot be "quiet" and print "debug" messages at the same time'))
+    exit(1)
+
+
+  # collect list of empty directories:
+  debug('going to process directories: %s', args.paths)
+  empty_dirs = set()
+  for path in args.paths:
+    if not args.relative:
+      path = abspath(path)
+    for root, dir_names, _ in walk(path, onerror=handle_walk_error):
+      for dir_name in dir_names:
+        dir_path = path_join(root, dir_name)
+        debug('processing "%s"', dir_path)
+        try:
+          dir_is_empty = not bool(listdir(dir_path))
+        except OSError as exception:
+          handle_walk_error(exception)
+        else:
+          if dir_is_empty:
+            info('empty: "%s"', dir_path)
+            empty_dirs.add(dir_path)
+
+
+  # load previously empty directories:
+  previously_empty_dirs = set()
+  if not args.state_file:
+    debug(('no state file specified, not loading list of previously '
+           'empty directories'))
+  else:
+    if not isfile(args.state_file):
+      info(('state file absent, will skip loading list of '
+            'previously empty directories'))
+    else:
+      try:
+        with open(args.state_file, 'r') as state_filep:
+          previously_empty_dirs = set(load(state_filep))
+      except OSError as exception:
+        warning(('state file seems to be unreadable (%s), cannot load '
+                 'list of previously empty directories'), exception)
+      except JSONDecodeError as exception:
+        warning(('state file seems to be corrupt (%s), cannot load list '
+                 'of previously empty directories'), exception)
+
+
+  # print diff of empty directories:
+  new_empty_dirs = empty_dirs - previously_empty_dirs
+  for dir_name in sorted(new_empty_dirs):
+    print(dir_name)
+
+
+  # store list of this time empty directories:
+  try:
+    with open(args.state_file, 'w') as state_filep:
+      dump(list(empty_dirs), state_filep)
+  except Exception as exception:
+    error('could not write state file: %s', exception)
+    exit(2)
+
+
+def main():
+  '''
+  Wrapper around actual main procedure.
+
+  Will hold back uncaught exceptions of the (actual) main procedure,
+  will run clean up jobs, and will raise the held exception afterwards.
+  '''
+
+  cleaner = Cleaner()
+  abnormal_termination = False
+  try:
+    caught_main(cleaner)
+  except Exception as exception:
+    error("abnormal termination (see error at end of output)")
+    abnormal_termination = True
+    raise exception
+  finally:
+    debug("running cleanup jobs")
+    cleaner.do_all_jobs()
+
+  if abnormal_termination:
+    exit(1)
+  else:
+    debug("success - bye")
+
+
+
+if __name__ == '__main__':
+  main()
