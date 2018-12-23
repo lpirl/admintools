@@ -15,7 +15,7 @@ from subprocess import check_output
 
 
 
-class Cleaner(object):
+class Cleaner:
   '''
   A sort of a job queue that holds jobs which should be run (in order)
   before the program exits.
