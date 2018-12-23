@@ -25,7 +25,7 @@ import argparse
 from logging import (getLogger, ERROR, DEBUG, INFO, debug, info,
                      warning, error)
 from os import walk, listdir
-from os.path import join as path_join, abspath, isfile
+from os.path import join as path_join, abspath, ismount, isfile
 from json import JSONDecodeError, load, dump
 
 
@@ -68,7 +68,7 @@ def set_up_logger(be_quiet, be_verbose, print_debug):
 
 
 
-def get_empty_dirs(paths, use_relative_paths=False):
+def get_empty_dirs(paths, no_xdev=False, use_relative_paths=False):
   """ returns a set of empty directories found in ``paths``"""
 
   debug('going to process directories: %s', paths)
@@ -80,9 +80,18 @@ def get_empty_dirs(paths, use_relative_paths=False):
       path = abspath(path)
 
     for root, dir_names, _ in walk(path, onerror=handle_walk_error):
-      for dir_name in dir_names:
+
+      # we iterate over a copy, so we can modify the original list:
+      for dir_name in dir_names[:]:
+
         dir_path = path_join(root, dir_name)
         debug('processing "%s"', dir_path)
+
+        if no_xdev and ismount(dir_path):
+          info('not descending into mount point "%s"', dir_path)
+          # this is O(n) and could be improved:
+          dir_names.remove(dir_name)
+
         try:
           dir_is_empty = not bool(listdir(dir_path))
         except OSError as exception:
@@ -135,6 +144,11 @@ def print_new_items(old, new):
 
 def store_paths(file_name, paths):
   """ stores ``paths`` in ``file_name`` """
+
+  if not file_name:
+    debug('no file specified, not storing paths')
+    return paths
+
   try:
     with open(file_name, 'w') as filep:
       dump(list(paths), filep)
@@ -164,6 +178,8 @@ def main():
                       help='turn off warning messages')
   parser.add_argument('-r', '--relative', action='store_true', default=False,
                       help='don\'t normalize to absolute paths')
+  parser.add_argument('-x', '--no-xdev', action='store_true', default=False,
+                      help='don\'t cross file system boundaries')
   parser.add_argument('-s', '--state-file', default=None,
                       help=('file to store list of empty directories in; '
                             'causes output to contain only directory '
@@ -177,7 +193,7 @@ def main():
 
   set_up_logger(args.quiet, args.verbose, args.debug)
 
-  empty_dirs = get_empty_dirs(args.paths, args.relative)
+  empty_dirs = get_empty_dirs(args.paths, args.no_xdev, args.relative)
 
   previously_empty_dirs = load_paths(args.state_file)
 
