@@ -25,36 +25,8 @@ import argparse
 from logging import (getLogger, ERROR, DEBUG, INFO, debug, info,
                      warning, error)
 from os import walk, listdir
-from os.path import join as path_join, abspath, isdir, isfile
+from os.path import join as path_join, abspath, isfile
 from json import JSONDecodeError, load, dump
-
-
-class Cleaner:
-  '''
-  A sort of a job queue that holds jobs which should be run (in order)
-  before the program exits.
-  '''
-
-  def __init__(self):
-    ''' initializes instance variables '''
-    self._jobs = []
-
-  def add_job(self, func, *args, **kwargs):
-    ''' add a job to the queue '''
-    self._jobs.append((func, args, kwargs))
-
-  def do_all_jobs(self):
-    ''' do (and remove) all the jobs in (from) the queue '''
-    while self._jobs:
-      self.do_one_job()
-
-  def do_one_job(self):
-    ''' do and remove one job from the queue '''
-    # in reverse order:
-    func, args, kwargs = self._jobs.pop()
-    debug("cleanup: func=%s.%s, args=%r, kwargs=%r", func.__module__,
-          func.__name__, args, kwargs)
-    func(*args, **kwargs)
 
 
 
@@ -70,8 +42,109 @@ def handle_walk_error(exception):
           exception.filename)
 
 
+def set_up_logger(be_quiet, be_verbose, print_debug):
+  """
+  configures the logger according to (Boolean) log levels specified
+  """
 
-def caught_main(cleaner):
+  logger = getLogger()
+  logger.name = ""
+
+  if be_quiet and be_verbose:
+    error(('conflicting options specified: '
+           'cannot be quiet and verbose at the same time'))
+    exit(1)
+  if be_quiet and print_debug:
+    error(('conflicting options specified: '
+           'cannot be quiet and print debug messages at the same time'))
+    exit(1)
+
+  if be_quiet:
+    logger.setLevel(ERROR)
+  if be_verbose:
+    logger.setLevel(INFO)
+  if print_debug:
+    logger.setLevel(DEBUG)
+
+
+
+def get_empty_dirs(paths, use_relative_paths=False):
+  """ returns a set of empty directories found in ``paths``"""
+
+  debug('going to process directories: %s', paths)
+  empty_dirs = set()
+
+  for path in paths:
+
+    if not use_relative_paths:
+      path = abspath(path)
+
+    for root, dir_names, _ in walk(path, onerror=handle_walk_error):
+      for dir_name in dir_names:
+        dir_path = path_join(root, dir_name)
+        debug('processing "%s"', dir_path)
+        try:
+          dir_is_empty = not bool(listdir(dir_path))
+        except OSError as exception:
+          handle_walk_error(exception)
+        else:
+          if dir_is_empty:
+            info('empty: "%s"', dir_path)
+            empty_dirs.add(dir_path)
+
+  return empty_dirs
+
+
+
+def load_paths(file_name):
+  """
+  loads paths from ``file_name`` and returns those as a set, or returns
+  an empty set if something goes wrong
+  """
+
+  paths = set()
+
+  if not file_name:
+    debug('no file specified, not loading paths')
+    return paths
+
+  if not isfile(file_name):
+    info('specified file is not a file, not loading paths')
+    return paths
+
+  try:
+    with open(file_name, 'r') as filep:
+      paths = set(load(filep))
+  except OSError as exception:
+    warning('file seems to be unreadable (%s), cannot load paths',
+            exception)
+  except JSONDecodeError as exception:
+    warning('file seems to be corrupt (%s), cannot load paths',
+            exception)
+
+  return paths
+
+
+
+def print_new_items(old, new):
+  """ prints items which are in ``new`` but not in ``new``, sorted """
+  for dir_name in sorted(new - old):
+    print(dir_name)
+
+
+
+def store_paths(file_name, paths):
+  """ stores ``paths`` in ``file_name`` """
+  try:
+    with open(file_name, 'w') as filep:
+      dump(list(paths), filep)
+  except Exception as exception:
+    error('could not write file: %s', exception)
+    exit(2)
+
+
+
+def main():
   '''
   Actual main procedure.
 
@@ -102,109 +175,15 @@ def caught_main(cleaner):
 
   args = parser.parse_args()
 
+  set_up_logger(args.quiet, args.verbose, args.debug)
 
-  # set up logger
-  logger = getLogger()
-  logger.name = ""
-  if args.quiet:
-    logger.setLevel(ERROR)
-  if args.verbose:
-    logger.setLevel(INFO)
-  if args.debug:
-    logger.setLevel(DEBUG)
+  empty_dirs = get_empty_dirs(args.paths, args.relative)
 
+  previously_empty_dirs = load_paths(args.state_file)
 
-  # check for conflicting command line options:
-  if args.quiet and args.verbose:
-    error(('conflicting options specified: '
-           'cannot be "quiet" and "verbose" at the same time'))
-    exit(1)
-  if args.quiet and args.debug:
-    error(('conflicting options specified: '
-           'cannot be "quiet" and print "debug" messages at the same time'))
-    exit(1)
+  print_new_items(previously_empty_dirs, empty_dirs)
 
-
-  # collect list of empty directories:
-  debug('going to process directories: %s', args.paths)
-  empty_dirs = set()
-  for path in args.paths:
-    if not args.relative:
-      path = abspath(path)
-    for root, dir_names, _ in walk(path, onerror=handle_walk_error):
-      for dir_name in dir_names:
-        dir_path = path_join(root, dir_name)
-        debug('processing "%s"', dir_path)
-        try:
-          dir_is_empty = not bool(listdir(dir_path))
-        except OSError as exception:
-          handle_walk_error(exception)
-        else:
-          if dir_is_empty:
-            info('empty: "%s"', dir_path)
-            empty_dirs.add(dir_path)
-
-
-  # load previously empty directories:
-  previously_empty_dirs = set()
-  if not args.state_file:
-    debug(('no state file specified, not loading list of previously '
-           'empty directories'))
-  else:
-    if not isfile(args.state_file):
-      info(('state file absent, will skip loading list of '
-            'previously empty directories'))
-    else:
-      try:
-        with open(args.state_file, 'r') as state_filep:
-          previously_empty_dirs = set(load(state_filep))
-      except OSError as exception:
-        warning(('state file seems to be unreadable (%s), cannot load '
-                 'list of previously empty directories'), exception)
-      except JSONDecodeError as exception:
-        warning(('state file seems to be corrupt (%s), cannot load list '
-                 'of previously empty directories'), exception)
-
-
-  # print diff of empty directories:
-  new_empty_dirs = empty_dirs - previously_empty_dirs
-  for dir_name in sorted(new_empty_dirs):
-    print(dir_name)
-
-
-  # store list of this time empty directories:
-  try:
-    with open(args.state_file, 'w') as state_filep:
-      dump(list(empty_dirs), state_filep)
-  except Exception as exception:
-    error('could not write state file: %s', exception)
-    exit(2)
-
-
-def main():
-  '''
-  Wrapper around actual main procedure.
-
-  Will hold back uncaught exceptions of the (actual) main procedure,
-  will run clean up jobs, and will raise the held exception afterwards.
-  '''
-
-  cleaner = Cleaner()
-  abnormal_termination = False
-  try:
-    caught_main(cleaner)
-  except Exception as exception:
-    error("abnormal termination (see error at end of output)")
-    abnormal_termination = True
-    raise exception
-  finally:
-    debug("running cleanup jobs")
-    cleaner.do_all_jobs()
-
-  if abnormal_termination:
-    exit(1)
-  else:
-    debug("success - bye")
+  store_paths(args.state_file, empty_dirs)
 
 
 
