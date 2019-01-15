@@ -16,7 +16,7 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: Start(ing|ed) Daily apt activities\.+
 
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: [._[:alnum:]-]+\.timer: Adding ([[:digit:]]+h )?([[:digit:]]+min )?[[:digit:]]+\.[[:digit:]]+m?s random time\.
-^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: (Creat|Remov)ed slice User Slice of [[:alnum:]_]+\.$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: (Creat|Remov)ed slice User Slice of (UID )?[[:alnum:]_]+\.$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: (Start|Stopp)(ing|ed) User Manager for UID [[:digit:]]+\.(\.\.)?$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: Starting Session [[:digit:]]+ of user [[:alnum:]_]+\.$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: Started Session [[:digit:]]+ of user [[:alnum:]_]+\.$
@@ -32,4 +32,4 @@
 
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: (Listening on|Closed) Sound System\.$
 
-^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: [._[:alnum:]-]+\.service: Succeeded\.$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: [._[:alnum:]-@]+: Succeeded\.$
