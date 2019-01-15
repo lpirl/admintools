@@ -1,0 +1,3 @@
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: Starting Daily man-db regeneration\.\.\.$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: Started Daily man-db regeneration\.$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ mandb\[[[:digit:]]+\]:
