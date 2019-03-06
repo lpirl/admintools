@@ -7,3 +7,4 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:]. ]+\] nouveau [.:[:digit:]]+: HDMI-[A-Z]+-[[:digit:]]+: EDID block [[:digit:]]+ invalid\.$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:]. ]+\] nouveau [.:[:digit:]]+: DRM: .*$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:]. ]+\] \[drm:drm_add_edid_modes \[drm\]\] \*ERROR\* Unknown HDMI VIC: [[:digit:]]+$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:]. ]+\] i2c i2c-[0-9]: sendbytes: NAK bailout.$
