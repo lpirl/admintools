@@ -1,2 +1,2 @@
-^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ smartd\[[[:digit:]]+\]: Device: [^[:space:]]+ \[SAT\], is in STANDBY mode, suspending checks$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ smartd\[[[:digit:]]+\]: Device: [^[:space:]]+ \[SAT\], is in (STANDBY|SLEEP) mode, suspending checks$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ smartd\[[[:digit:]]+\]: Device: [^[:space:]]+ \[SAT\], is back in ACTIVE or IDLE mode, resuming checks \([0-9]+ checks skipped\)$
