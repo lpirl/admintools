@@ -1,3 +1,8 @@
+# At the time of writing, this was intended to prevent SSD wearing out
+# due to a lot of cache writes (e.g., by Web browsers).
+# However, SSD wearout is not really an issue anymore; you probably
+# won't need this.
+
 [Unit]
 Description=Mounts users' .cache directories in their homes to tmpfs
 
