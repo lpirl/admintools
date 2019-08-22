@@ -136,7 +136,10 @@ def load_paths(file_name):
 def print_missing_items(old, new):
   """ prints items which are in ``new`` but not in ``new``, sorted """
   for item in sorted(old - new):
-    print(item)
+
+    # ``os.walk`` might return surrogate characters which cannot be utf-8
+    # encoded without further ado
+    print(item.encode('utf-8', 'surrogateescape').decode('utf-8'))
 
 
 
