@@ -1,3 +1,13 @@
+# deprecation notice
+
+Configuration files will slowly be migrated to
+https://gitlab.com/lpirl/dotfiles .
+
+Configuration files will slowly be migrated to
+https://gitlab.com/lpirl/scripts .
+
+# README
+
 As always:
 
 * no warranty of any kind
