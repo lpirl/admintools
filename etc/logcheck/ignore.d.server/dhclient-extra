@@ -1,0 +1,1 @@
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ dhclient\[[[:digit:]]+\]: DHCPREQUEST for [[:xdigit:].:]{3,39} on [^[:space:]]+ to [[:xdigit:].:]{3,39} port [[:alnum:]]+$
