@@ -13,26 +13,26 @@
 
 if [ "$1" = "" ]
 then
-	echo "please provide device as 1st argument. Example:"
-	echo "$0 /dev/sda1 90"
-	exit 1
+  echo "please provide the mount point as 1st argument. Example:"
+  echo "$0 /mnt/pool 90"
+  exit 1
 fi
 
 if ! [[ "$2" =~ ^[0-9]+$ ]] ;
 then
-	echo "please provide the maximum percentage of disk space used as 2nd argument. Example:"
-	echo "$0 /dev/sda1 90"
-	exit 1
+  echo "please provide the maximum percentage of disk space used as 2nd argument. Example:"
+  echo "$0 /mnt/pool 90"
+  exit 1
 fi
 
-DF_LINE=$(df | grep "$1")
+DF_LINE=$(df -h "$1" | tail -n+2)
 PERCENT_USED=$(echo $DF_LINE | awk '{ print $5}' | sed 's/%//g')
 PERCENT_MAX=$2
 MOUNTPOINT=$(echo $DF_LINE | awk '{ print $6}' | sed 's/%//g')
 HOSTNAME=$(hostname -f)
 
 if [ "$PERCENT_USED" -gt "$PERCENT_MAX" ] ; then
-    cat << EOF
+  cat << EOF
 Dear administrator,
 
 the following file system on the host

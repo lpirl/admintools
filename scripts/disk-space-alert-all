@@ -20,5 +20,11 @@ then
 	exit 1
 fi
 
-df -h | grep '^/dev' | cut -d" " -f1 | sort -u | \
-	xargs -I{} -P$(nproc) ./disk-space-alert {} $1
+# skip header, make unique by first column, ignore loop devices, get
+# mount point
+df \
+| tail -n+2 \
+| sort -u -t' '  -k1,1 \
+| egrep -v '^/dev/loop[0-9]+' \
+| awk '{print $6}' \
+| xargs -I{} -P$(nproc) ./disk-space-alert {} $1
