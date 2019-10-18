@@ -3,7 +3,7 @@
 Configuration files will slowly be migrated to
 https://gitlab.com/lpirl/dotfiles .
 
-Configuration files will slowly be migrated to
+Scripts will slowly be migrated to
 https://gitlab.com/lpirl/scripts .
 
 # README
