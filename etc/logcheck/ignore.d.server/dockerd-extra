@@ -3,3 +3,8 @@
 
 ^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ systemd\[[-._[:alnum:]]+\]: run-docker-netns-.*\.mount: Succeeded.$
 ^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ systemd\[[-._[:alnum:]]+\]: var-lib-docker-containers-.*\.mount: Succeeded.$'
+
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:]. ]+\] (veth.* renamed from .*|.* renamed from veth.*)$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:]. ]+\] IPv6: ADDRCONF\(NETDEV_CHANGE\): veth.*: link becomes ready$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:]. ]+\] docker0: port 2\(veth.*\) entered (blocking|forwarding|disabled) state$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:]. ]+\] device veth.* (entered|left) promiscuous mode$
