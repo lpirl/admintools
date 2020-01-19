@@ -1,1 +1,2 @@
 ^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ gitlab-runner\[[-._[:alnum:]]+\]: Checking for jobs\.\.\. received .*$
+^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ gitlab-runner\[[-._[:alnum:]]+\]: Job succeeded .*$
