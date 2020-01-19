@@ -1,0 +1,5 @@
+^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ dockerd\[[-._[:alnum:]]+\]: .* level=info .*$
+^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ dockerd\[[-._[:alnum:]]+\]: .* level=warning msg="Your kernel does not support swap limit capabilities .*$
+
+^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ systemd\[[-._[:alnum:]]+\]: run-docker-netns-.*\.mount: Succeeded.$
+^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ systemd\[[-._[:alnum:]]+\]: var-lib-docker-containers-.*\.mount: Succeeded.$'
