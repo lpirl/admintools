@@ -1,2 +1,3 @@
 ^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ gitlab-runner\[[-._[:alnum:]]+\]: Checking for jobs\.\.\. received .*$
 ^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ gitlab-runner\[[-._[:alnum:]]+\]: Job succeeded .*$
+^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ gitlab-runner\[[-._[:alnum:]]+\]: .* Cache config not defined. Skipping cache operation..*$
