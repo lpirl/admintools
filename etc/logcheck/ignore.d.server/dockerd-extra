@@ -3,7 +3,8 @@
 ^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ dockerd\[[-._[:alnum:]]+\]: .* level=error msg="attach failed with error: error attaching stdout stream: write unix /var/run/docker\.sock->@: write: broken pipe"$
 
 ^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ systemd\[[-._[:alnum:]]+\]: run-docker-netns-.*\.mount: Succeeded.$
-^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ systemd\[[-._[:alnum:]]+\]: var-lib-docker-containers-.*\.mount: Succeeded.$'
+^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ systemd\[[-._[:alnum:]]+\]: var-lib-docker-containers-.*\.mount: Succeeded.$
+^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ systemd\[[-._[:alnum:]]+\]: run-docker-runtime.*\.mount: Succeeded.$
 
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:]. ]+\] (veth.* renamed from .*|.* renamed from veth.*)$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:]. ]+\] IPv6: ADDRCONF\(NETDEV_UP\): veth.*: link is not ready$
