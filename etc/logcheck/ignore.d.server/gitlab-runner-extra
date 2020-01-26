@@ -3,3 +3,5 @@
 ^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ gitlab-runner\[[-._[:alnum:]]+\]: .* Cache config not defined. Skipping cache operation..*$
 ^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ gitlab-runner\[[-._[:alnum:]]+\]: no referees configured .*$
 ^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ gitlab-runner\[[-._[:alnum:]]+\]: .*[ =]execution took longer than .*$
+^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ gitlab-runner\[[-._[:alnum:]]+\]: .* Job failed: exit code [^0] .*$
+^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ gitlab-runner\[[-._[:alnum:]]+\]: .* Failed to process runner .*;m=exit code [^0].*$
