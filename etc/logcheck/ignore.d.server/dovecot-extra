@@ -8,4 +8,4 @@
 ^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ dovecot: imap\([-._[:alnum:]]+\): Connection closed \(UID FETCH running for [.0-9]+ \+ waiting input for [.0-9]+ secs, ([.0-9]+ in locks, )?[0-9]+ B in \+ [.0-9]+\+[.0-9]+ B out, state=wait-input\) in=[0-9]+ out=[.0-9]+$
 ^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ dovecot: imap-login: Login: user=<[-._[:alnum:]]+>, method=[^[:space:]]+, rip=[[:xdigit:].:]{3,39}, lip=[[:xdigit:].:]{3,39}, mpid=[[:digit:]]+, TLS, session=<[^[:space:]]+>
 ^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ dovecot: imap-login: Disconnected \(client didn't finish SASL auth, waited [[:digit:]]+ secs\): user=<>, method=[^[:space:]]+, rip=[[:xdigit:].:]{3,39}, lip=[[:xdigit:].:]{3,39}, TLS, session=<[^[:space:]]+>
-^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ dovecot: imap-login: Disconnected \(no auth attempts in [[:digit:]]+ secs\): user=<>, rip=[[:xdigit:].:]{3,39}, lip=[[:xdigit:].:]{3,39}, TLS, session=<[^[:space:]]+>
+^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ dovecot: imap-login: Disconnected \(no auth attempts in [[:digit:]]+ secs\): user=<>, rip=[[:xdigit:].:]{3,39}, lip=[[:xdigit:].:]{3,39}, TLS(: Disconnected)?, session=<[^[:space:]]+>$
