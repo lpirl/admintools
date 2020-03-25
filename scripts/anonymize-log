@@ -209,6 +209,10 @@ class Ipv6Anonymizer(AnonymizerBase):
     Takes an ``ipv6_address`` as string and returns the corresponding
     integer.
     '''
+
+    # remove the zone index since ``inet_pton`` won't accept it
+    ipv6_address = ipv6_address.rsplit('%', maxsplit=1)[0]
+
     try:
       pton = inet_pton(AF_INET6, ipv6_address)
     except OSError:
