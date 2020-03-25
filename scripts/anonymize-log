@@ -133,7 +133,7 @@ class Ipv4Anonymizer(AnonymizerBase):
       pton = inet_pton(AF_INET, ipv4_address)
     except OSError:
       error('Could not unpack a string, which we identified as IPv4 '
-            'address. The operating system says it\'s invalid: %s'
+            'address. The operating system says it\'s invalid: %s '
             '– falling back to 0.0.0.0', ipv4_address)
       pton = inet_pton(AF_INET, '0.0.0.0')
 
@@ -213,7 +213,7 @@ class Ipv6Anonymizer(AnonymizerBase):
       pton = inet_pton(AF_INET6, ipv6_address)
     except OSError:
       error('Could not unpack a string, which we identified as IPv6 '
-            'address. The operating system says it\'s invalid: %s'
+            'address. The operating system says it\'s invalid: %s '
             '– falling back to ::', ipv6_address)
       pton = inet_pton(AF_INET6, '::')
 
