@@ -1,7 +1,7 @@
 # to ignore sshd's verbose messages:
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ sshd\[[[:digit:]]+\]: Set \/proc\/self\/oom_score_adj( from [[:digit:]]+)? to -?[[:digit:]]+$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ sshd\[[[:digit:]]+\]: Connection from [[:xdigit:].:]{3,39} port [[:digit:]]+ on [[:xdigit:].:]{3,39} port [[:digit:]]+( rdomain "[^"]*")?$
-^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ sshd\[[[:digit:]]+\]: Connection closed by [:.[:xdigit:]]+ port [[:digit:]]+ \[preauth\]$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ sshd\[[[:digit:]]+\]: Connection closed by( authenticating user [^\s]+)? [:.[:xdigit:]]+ port [[:digit:]]+ \[preauth\]$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ sshd\[[[:digit:]]+\]: Postponed publickey for [[:alnum:]_]+ from [[:xdigit:].:]{3,39} port [[:digit:]]+ ssh2 \[preauth\]$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ sshd\[[[:digit:]]+\]: Starting session: (shell|command|subsystem 'sftp') (on pts\/[[:digit:]]+ )?for [[:alnum:]_]+ from [[:xdigit:].:]{3,39} port [[:digit:]]+( id [[:digit:]]+)?$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ sshd\[[[:digit:]]+\]: User child is on pid [[:digit:]]+$
