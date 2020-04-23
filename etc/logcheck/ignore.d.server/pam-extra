@@ -1,0 +1,2 @@
+^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ (auth|systemd): pam_unix\([-._[:alnum:]]+:session\): session opened for user [-._[:alnum:]]+ by \(uid=[[:digit:]]+\)
+^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ (auth|systemd): pam_unix\([-._[:alnum:]]+:session\): session closed for user [-._[:alnum:]]+
