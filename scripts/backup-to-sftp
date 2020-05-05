@@ -74,6 +74,7 @@ CLEAN_HISTORY_DIR=0							# -c
 DRY_RUN=0												# -d
 VERBOSE=0												# -v
 STDOUT=/dev/null
+SSH_OPTS=""
 RSYNC_OPTS=""
 USER_RSYNC_OPTS=""
 
@@ -173,13 +174,14 @@ type rsync > $STDOUT || exit 1
 # assemble rsync command
 #
 
+SSH_OPTS+='-Tx'
+
 if [ $VERBOSE -eq 1 ]
 then
 	RSYNC_OPTS+=' --verbose --verbose --progress'
-	SSH_OPTS=""
 else
 	RSYNC_OPTS+=' --quiet'
-	SSH_OPTS="-q"
+	SSH_OPTS+=' -q'
 fi
 RSYNC="run_safely rsync --rsh='ssh $SSH_OPTS -p $TARGET_PORT'"
 
