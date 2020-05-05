@@ -213,6 +213,8 @@ fi
 # copy
 #
 
+RSYNC_OPTS+=' --compress'
+
 RSYNC_OPTS+=' --human-readable'
 RSYNC_OPTS+=' --one-file-system'
 RSYNC_OPTS+=' --fuzzy'
