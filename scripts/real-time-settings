@@ -217,19 +217,19 @@ class CpuGovernor(ActionBase):
                           self.GOVERNOR_OFF_DEFAULT)
 settings_modules.append(CpuGovernor)
 
-class IntelPState(ActionBase):
-  PSTATE_NO_TURBO_FILE_NAME = "/sys/devices/system/cpu/intel_pstate/no_turbo"
-  PSTATE_NO_TURBO_ON = 0
-  PSTATE_NO_TURBO_OFF_DEFAULT = 1
+class TurboBoost(ActionBase):
+  NO_TURBO_FILE_NAME = "/sys/devices/system/cpu/intel_pstate/no_turbo"
+  NO_TURBO_ON = 1
+  NO_TURBO_OFF_DEFAULT = 0
   def rt_settings_on(self):
     self.execute_safely(self.store_and_replace_content_in_file,
-                        self.PSTATE_NO_TURBO_FILE_NAME,
-                        self.PSTATE_NO_TURBO_ON)
+                        self.NO_TURBO_FILE_NAME,
+                        self.NO_TURBO_ON)
   def rt_settings_off(self):
     self.execute_safely(self.restore_or_set_default_content_in_file,
-                        self.PSTATE_NO_TURBO_FILE_NAME,
-                        self.PSTATE_NO_TURBO_OFF_DEFAULT)
-settings_modules.append(IntelPState)
+                        self.NO_TURBO_FILE_NAME,
+                        self.NO_TURBO_OFF_DEFAULT)
+settings_modules.append(TurboBoost)
 
 
 #
