@@ -8,7 +8,8 @@ Configuration files will slowly be migrated to
 Scripts will slowly be migrated to
 [gitlab.com/lpirl](https://gitlab.com/lpirl).
 
-[//]: <> (list specific repositories at GitLab, once in place)
+[//]: <> (list specific repositories at GitLab, once in place; plus
+          "misc-scritps" repo)
 
 # README
 
