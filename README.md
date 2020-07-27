@@ -1,10 +1,14 @@
 # deprecation notice
 
 Configuration files will slowly be migrated to
-https://gitlab.com/lpirl/dotfiles .
+[gitlab.com/lpirl/dotfiles](https://gitlab.com/lpirl/dotfiles).
+
+[//]: <> (and mention ansible-roles-2020 at GitLab, once in place)
 
 Scripts will slowly be migrated to
-https://gitlab.com/lpirl/scripts .
+[gitlab.com/lpirl](https://gitlab.com/lpirl).
+
+[//]: <> (list specific repositories at GitLab, once in place)
 
 # README
 
