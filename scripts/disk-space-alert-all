@@ -22,7 +22,8 @@ fi
 
 # skip header, make unique by first column, ignore loop devices, get
 # mount point
-df \
+df 2>&1 \
+| grep -v "Transport endpoint is not connected" \
 | tail -n+2 \
 | sort -u -t' '  -k1,1 \
 | egrep -v '^/dev/loop[0-9]+' \
