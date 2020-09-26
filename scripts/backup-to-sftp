@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "deprecation notice: this script moved to" \
+  "https://gitlab.com/lpirl/backup2sftp" >&2
+
 #######################################################################
 #
 # help
