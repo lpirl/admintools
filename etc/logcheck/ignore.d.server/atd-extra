@@ -1,0 +1,1 @@
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ atd\[[[:digit:]]+\]: pam_unix\(atd:session\): session opened for user [^ ]+ by (.+)$
