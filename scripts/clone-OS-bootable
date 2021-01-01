@@ -375,8 +375,6 @@ def check_dependencies(dest_fs):
       info("check if '%s' is installed", requirement)
       if requirement not in installed_packages:
         error("required package '%s' not installed", requirement)
-        import pdb
-        pdb.set_trace()
         exit(5)
 
 
