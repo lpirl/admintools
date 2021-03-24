@@ -1,2 +1,3 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ snapd\[[[:digit:]]+\]:.+cannot refresh: snap has no updates available.+$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ snapd\[[[:digit:]]+\]:.+auto-refresh: all snaps are up-to-date$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: Closed REST API socket for snapd user session agent\.$

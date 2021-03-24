@@ -1,5 +1,5 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:].]+\] Process accounting resumed$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: (Stopp|Start)(ing|ed) LSB: process and login accounting\.(\.\.)?$
-^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ acct\[[[:digit:]]+\]: Turning on process accounting, file set to '[[:alnum:]\/]+'\.$
-^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ acct\[[[:digit:]]+\]: Turning off process accounting\.$
-^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ acct\[[[:digit:]]+\]: Done\.\.$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ acct(on)?\[[[:digit:]]+\]: Turning on process accounting, file set to '[[:alnum:]\/]+'\.$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ acct(on)?\[[[:digit:]]+\]: Turning off process accounting\.$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ acct(on)?\[[[:digit:]]+\]: Done\.\.$

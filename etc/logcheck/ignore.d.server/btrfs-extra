@@ -1,3 +1,2 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:].]+\] BTRFS info \(device [^\w]+\): force [^\w]+ compression, level [[:digit:]]+$
-^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:].]+\] BTRFS info \(device [^\w]+\): force [^\w]+ compression, level [[:digit:]]+$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ kernel: \[[[:digit:].]+\] BTRFS info \(device [^\w]+\): has skinny extents$

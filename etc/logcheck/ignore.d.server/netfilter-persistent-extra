@@ -1,0 +1,2 @@
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ netfilter-persistent\[[[:digit:]]+\]: Automatic flush disabled; .*$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ netfilter-persistent\[[[:digit:]]+\]: run-parts: executing .*$

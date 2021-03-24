@@ -1,0 +1,2 @@
+# this is a transient failure, there is another message if retries fail as well:
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ nslcd\[[[:digit:]]+\]: \[[[:alnum:]]+\] <[._[:alnum:]-]+="[._[:alnum:]-]+"> ldap_result\(\) failed: Can't contact LDAP server$

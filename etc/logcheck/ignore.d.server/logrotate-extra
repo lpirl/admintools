@@ -1,1 +1,3 @@
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: rsyslog\.service: Sent signal SIGHUP to main process [[:digit:]]+ \(rsyslogd\) on client request\.$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: Finished Rotate log files\.$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: logrotate\.service: Consumed ([[:digit:]]min )?[[:digit:]]{1,2}\.[[:digit:]]+s CPU time\.$

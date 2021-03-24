@@ -1,1 +1,2 @@
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ console-kit-daemon\[[[:digit:]]+\]: (\(process:[[:digit:]]+\): )?GLib-CRITICAL:? .*$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ console-kit-daemon\[[[:digit:]]+\]: missing action$

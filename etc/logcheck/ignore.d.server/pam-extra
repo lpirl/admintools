@@ -1,2 +1,2 @@
-^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ [-._[:alnum:]]+: pam_unix\([-._[:alnum:]]+:session\): session opened for user [-._[:alnum:]]+ by \(uid=[[:digit:]]+\)$
-^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ [-._[:alnum:]]+: pam_unix\([-._[:alnum:]]+:session\): session closed for user [-._[:alnum:]]+$
+^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ [^:]+: pam_unix\([^:]+:session\): session opened for user [^\s]+ by [^\s]+$
+^\w{3} [ :[:digit:]]{11} [-._[:alnum:]]+ [^:]+: pam_unix\([^:]+:session\): session closed for user [^\s]+$
