@@ -18,11 +18,11 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd-logind\[[[:digit:]]+\]: Session [[:digit:]]+ logged out\. Waiting for processes to exit\.$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd-logind\[[[:digit:]]+\]: Removed session [[:alnum:]_]+\.$
 
-^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd-tmpfiles\[[[:digit:]]+\]: .+: Line references path below legacy directory /
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd-tmpfiles\[[[:digit:]]+\]: .+ Line references path below legacy directory /
 
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: (Starting|Started|Finished) Cleanup of Temporary Directories\.+
 
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: Queued start job for default target Main User Target\.
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: Finished User Runtime Directory /run/user/[0-9]+\.
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: Startup finished in .*\.
-^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: user-[0-9]+.slice: Consumed .* CPU time\.
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ systemd\[[[:digit:]]+\]: [^:]+: Consumed .* CPU time\.$
