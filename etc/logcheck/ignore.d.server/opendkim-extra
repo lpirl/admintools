@@ -1,4 +1,4 @@
-^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ opendkim\[[[:digit:]]+\]: OpenDKIM Filter v[^\s]+ starting \(.*\)$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ opendkim\[[[:digit:]]+\]: OpenDKIM Filter v[^[:space:]]+ starting \(.*\)$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ opendkim\[[[:digit:]]+\]: [[:alnum:]]+: s=[^ ]+ d=[^ ]+ SSL$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ opendkim\[[[:digit:]]+\]: [[:alnum:]]+: bad signature data$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ opendkim\[[[:digit:]]+\]: [[:alnum:]]+: message has signatures from ([._[:alnum:]-]+(, )?)+$
@@ -8,4 +8,4 @@
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ opendkim\[[[:digit:]]+\]: [[:alnum:]]+: s=[^[:space:]]+ d=[^[:space:]]+ SSL error:[[:digit:]]+:rsa routines:INT_RSA_VERIFY:bad signature$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ opendkim\[[[:digit:]]+\]: [[:alnum:]]+: s=[^[:space:]]+ d=[^[:space:]]+ SSL error:04091068:rsa routines:int_rsa_verify:bad signature$
 ^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ opendkim\[[[:digit:]]+\]: [[:alnum:]]+: DKIM-Signature field added \(.*\)$
-^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ opendkim\[[[:digit:]]+\]: OpenDKIM Filter v[^\s]+ terminating with status 0, errno = 0$
+^\w{3} [ :[:digit:]]{11} [._[:alnum:]-]+ opendkim\[[[:digit:]]+\]: OpenDKIM Filter v[^[:space:]]+ terminating with status 0, errno = 0$
