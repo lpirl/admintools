@@ -168,10 +168,21 @@ class Cron(ActionBase):
   def rt_settings_on(self):
     self.service_stop("cron")
     self.service_stop("crond")
+    self.service_stop("cronie")
   def rt_settings_off(self):
     self.service_start("cron")
     self.service_start("crond")
+    self.service_start("cronie")
 settings_modules.append(Cron)
+
+class Anacron(ActionBase):
+  def rt_settings_on(self):
+    self.service_stop("anacron.service")
+    self.service_stop("anacron.timer")
+  def rt_settings_off(self):
+    self.service_start("anacron.service")
+    self.service_start("anacron.timer")
+settings_modules.append(Anacron)
 
 class Tlp(ActionBase):
   def rt_settings_on(self):
@@ -179,6 +190,13 @@ class Tlp(ActionBase):
   def rt_settings_off(self):
     self.service_start("tlp")
 settings_modules.append(Tlp)
+
+class TuneD(ActionBase):
+  def rt_settings_on(self):
+    self.service_stop("tuned")
+  def rt_settings_off(self):
+    self.service_start("tuned")
+settings_modules.append(TuneD)
 
 class FrequencyScaling(ActionBase):
   CPUFREQ_BASE_PATH = "/sys/devices/system/cpu/cpu%i/cpufreq"
