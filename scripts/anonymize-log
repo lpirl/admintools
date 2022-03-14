@@ -140,6 +140,23 @@ class Ipv4Anonymizer(AnonymizerBase):
     return int.from_bytes(pton, byteorder='big')
 
   @staticmethod
+  def is_private(int_ipv4):
+    '''
+    Determine whether an IPv4 address is private
+    thanks to https://stackoverflow.com/a/8339939/5441588
+    '''
+    private_ranges = (
+      [2130706432, 4278190080], # 127.0.0.0,   255.0.0.0   https://www.rfc-editor.org/rfc/rfc3330
+      [3232235520, 4294901760], # 192.168.0.0, 255.255.0.0 https://www.rfc-editor.org/rfc/rfc1918
+      [2886729728, 4293918720], # 172.16.0.0,  255.240.0.0 https://www.rfc-editor.org/rfc/rfc1918
+      [167772160, 4278190080], # 10.0.0.0,    255.0.0.0   https://www.rfc-editor.org/rfc/rfc1918
+    )
+    for net in private_ranges:
+      if (int_ipv4 & net[1]) == net[0]:
+        return True
+    return False
+
+  @staticmethod
   def int_to_ipv4_address(integer):
     '''
     Takes an ``integer`` and returns the corresponding IPv4 address.
@@ -175,9 +192,13 @@ class Ipv4Anonymizer(AnonymizerBase):
     ''' see base class' documentation on ``setup`` '''
 
     self.pattern = compile_re(self.__class__.REGEXP)
+    self.replace_private_ipv4 = parsed_args.private_ipv4
 
-    debug("%s will truncate %d rightmost bits",
-          self.__class__.__name__, parsed_args.ipv4mask)
+    debug("%s will truncate %d rightmost bits%s",
+          self.__class__.__name__,
+          parsed_args.ipv4mask,
+          ' including private IPv4 ranges' if parsed_args.private_ipv4 else ''
+    )
     self.mask = self.FULL_MASK << parsed_args.ipv4mask
 
   def anonymize(self, line):
@@ -186,6 +207,8 @@ class Ipv4Anonymizer(AnonymizerBase):
     for match in self.pattern.finditer(line):
       matched_string = match.group(0)
       address_int = self.ipv4_address_to_int(matched_string)
+      if (not self.replace_private_ipv4 and self.is_private(address_int)):
+        return line
       masked_address_int = address_int & self.mask
       masked_address_str = self.int_to_ipv4_address(masked_address_int)
       line = line.replace(matched_string, masked_address_str, 1)
@@ -395,6 +418,8 @@ def caught_main(cleaner):
                       help='turn on debug messages')
   parser.add_argument('-v', '--verbose', action='store_true', default=False,
                       help='turn on verbose messages')
+  parser.add_argument('-P', '--private-ipv4', action='store_true', default=False,
+                      help='replace IPv4 part of private ranges too')
   parser.add_argument('--inplace', action='store_true', default=False,
                       help='replace input file (out_file will be ignored)')
   parser.add_argument('in_file', nargs='?', default='-',
