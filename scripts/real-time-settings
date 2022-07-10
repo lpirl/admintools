@@ -16,6 +16,9 @@ from multiprocessing import cpu_count
 from tempfile import gettempdir
 from json import load as json_load, dump as json_dump
 
+print("Deprecation warning: this script moved to "
+      "https://gitlab.com/lpirl/real-time-settings .")
+
 if __name__ != '__main__':
   raise NotImplementedError(
     "This is module should be called directly from command line."
