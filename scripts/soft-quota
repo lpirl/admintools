@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import logging
-from  os import statvfs
+import subprocess
+from os import statvfs
 
 from argparse import ArgumentParser
 
@@ -71,6 +72,8 @@ def setup_argarser():
     )
     argparser.add_argument("-d", "--debug", action="store_true",
                            help="show debug output")
+    argparser.add_argument("-du", "--usedu", action="store_true",
+                           help="use `du` instead of statvfs (slower, but accurate for CoW-systems)")
     argparser.add_argument("-m", "--metric", action="store_true",
                            help="resolve prefixes with factor 1000 " +
                                 "instead of 1024")
@@ -85,6 +88,9 @@ def get_bytes_used_from_statvfs(stat):
     bytes_used = (stat.f_blocks - stat.f_bfree) * stat.f_frsize
     logging.debug("stat {0} has {1} bytes used".format(stat, bytes_used))
     return bytes_used
+
+def du(path):
+	return subprocess.check_output(['du','-xh', '-d', '0', path]).split()[0].decode('utf-8')
 
 if __name__ == '__main__':
     """
@@ -108,9 +114,7 @@ if __name__ == '__main__':
     max_quota = converter.human_readable_to_bytes(args.quota)
     logging.debug("maximum quota in bytes: {0}".format(max_quota))
 
-    mounts_stats = [statvfs(d) for d in args.mounts]
-
-    mounts_bytes_used = map(get_bytes_used_from_statvfs, mounts_stats)
+    mounts_bytes_used = [converter.human_readable_to_bytes(du(d)) for d in args.mounts] if args.usedu else map(get_bytes_used_from_statvfs, [statvfs(d) for d in args.mounts])
 
     current_size = sum(mounts_bytes_used)
     logging.debug("sum of bytes used: {0}".format(current_size))
