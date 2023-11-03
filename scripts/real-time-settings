@@ -225,7 +225,7 @@ settings_modules.append(FrequencyScaling)
 class CpuGovernor(ActionBase):
   GOVERNOR_FILE_PATH_TEMPLATE = "/sys/devices/system/cpu/cpu%i/cpufreq/scaling_governor"
   GOVERNOR_ON = "performance"
-  GOVERNOR_OFF_DEFAULT = "powersave"
+  GOVERNOR_OFF_DEFAULT = "schedutil"
   def rt_settings_on(self):
     for cpu_num in range(cpu_count()):
       self.execute_safely(self.store_and_replace_content_in_file,
@@ -233,7 +233,7 @@ class CpuGovernor(ActionBase):
                           self.GOVERNOR_ON)
   def rt_settings_off(self):
     for cpu_num in range(cpu_count()):
-      self.execute_safely(self.store_and_replace_content_in_file,
+      self.execute_safely(self.restore_or_set_default_content_in_file,
                           self.GOVERNOR_FILE_PATH_TEMPLATE % cpu_num,
                           self.GOVERNOR_OFF_DEFAULT)
 settings_modules.append(CpuGovernor)
